@@ -2,42 +2,10 @@
 <html>
 <head>
 
-	<script>
-		/**
-		 * Detect if client is and Apple mobile device, or is using the Safari 
-		 * browser, redirect to Apple version of the game. The only difference 
-		 * with the iOS version is that is uses Phaser version 2.6.2, rather 
-		 * than Phaser CE version 2.10.3. 2.6.2 has much better performance in 
-		 * Safari and on iOS devices, while 2.10.3 runs better on Chrome and 
-		 * Android.
-		 */
-		// Detect mobile device
-		isMobile = false;
-		if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
-			isMobile = true;
-		}
-
-		if(isMobile) {
-			if( navigator.userAgent.match(/iPhone|iPad|iPod/i) ) {
-				//console.log('iDevice');
-				document.location.href = "iOS.html";
-			}
-		} else {
-			//console.log('Desktop');
-			var isSafari = /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification));
-			if(isSafari) {
-					console.log('found Safari');
-					document.location.href = "iOS.html";
-			} else {
-				//console.log('Not Safari');
-			}
-		}
-		
-	</script>
 
 	<meta charset="utf-8">
 	<title>Jammed</title>
-
+	<link rel="icon" type="image/png" href="assets/img/sprites/jammy/shooting/shooting-right1.png">
 	<meta name="description" content="Jammed">
 	<meta name="author" content="Jim Kulakowski">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
@@ -80,11 +48,9 @@
 	<script type="text/javascript" src="js/objects/WatermelonBoss.js"></script>
 	<script type="text/javascript" src="js/objects/WatermelonSeed.js"></script>
 	<script type="text/javascript" src="js/objects/PowerUp.js"></script>
-	<script type="text/javascript" src="js/objects/BreadToken.js"></script>
 	<script type="text/javascript" src="js/objects/virtualGamepad.js"></script>
 	<script type="text/javascript" src="js/objects/coin.js"></script>
 
-	<script type="text/javascript" src="js/helpers/SetCollisionBetweenModified.js"></script>
 	<script type="text/javascript" src="js/helpers/globals.js"></script>
 	<script type="text/javascript" src="js/helpers/shader.js"></script>
 

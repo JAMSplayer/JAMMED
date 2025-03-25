@@ -52,7 +52,7 @@ class Preload extends Phaser.Scene {
     // Tilemaps and tilesets
     this.load.image(
       "custom-city-tiles",
-      "assets/img/tilesets/custom-city-tiles.png"
+      "assets/img/tilesets/customCityTilesEXT.png"
     );
     this.load.image("theater-tiles", "assets/img/tilesets/theater-tiles.png");
     this.load.tilemapTiledJSON("level1", "assets/img/tilemaps/Level1.json");

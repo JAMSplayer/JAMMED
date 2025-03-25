@@ -15,15 +15,19 @@ class PowerUp extends Phaser.Physics.Arcade.Sprite {
     scene.physics.add.collider(this, scene.enemyStopBlocksLayer, () =>
       this.destroy()
     );
-    console.log(this);
+    scene.time.addEvent({
+      delay: 10,
+      callback: () => {
+        this.setFrame(this.data.values.powerUpType=='heal?'? 'still1' : 'still2');
+      },
+    });
 
-    //this.setFrame(this.data.values.powerUpType=='heal?'? 'still1' : 'still2');
   }
 
   update() {}
 
   effect() {
-    scene.jammy.powerUp(this.data.values.power, this.val);
+    scene.jammy.powerUp(this.data.values.powerUpType, this.val);
     this.destroy();
   }
 }

@@ -77,7 +77,10 @@ class CutSceneWatermelonDefeated extends Phaser.Scene {
 		// Check for key presses
 		if (
 		  keys.addKey(Phaser.Input.Keyboard.KeyCodes.Z).isDown ||
-		  keys.addKey(Phaser.Input.Keyboard.KeyCodes.X).isDown
+		  keys.addKey(Phaser.Input.Keyboard.KeyCodes.X).isDown ||
+		  
+		  keys.addKey(Phaser.Input.Keyboard.KeyCodes.Q).isDown ||
+		  keys.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE).isDown 
 		) {
 		  this.transitionToNextScene();
 		}
@@ -100,8 +103,9 @@ class CutSceneWatermelonDefeated extends Phaser.Scene {
 		alpha: 0,
 		duration: fadeTime,
 		onComplete: () => {
+			this.sound.stopAll();
 		  this.scene.start("EndCredits");
-		  this.bgMusic.stop();
+		
 		},
 	  });
 	}

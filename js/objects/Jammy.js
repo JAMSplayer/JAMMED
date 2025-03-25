@@ -93,10 +93,14 @@ class Jammy {
     this.leftButton.on(
       "down",
       function (event) {
-        this.leftIsDown = true;
-        this.walkingLeft = true;
-        this.facing = "left";
-        this.move(this.facing);
+        if (this.alive) {
+          this.leftIsDown = true;
+          this.walkingLeft = true;
+
+          this.facing = "left";
+
+          this.move(this.facing);
+        }
       },
       this
     );
@@ -104,10 +108,12 @@ class Jammy {
     this.rightButton.on(
       "down",
       function (event) {
-        this.rightIsDown = true;
-        this.walkingRight = true;
-        this.facing = "right";
-        this.move(this.facing);
+        if (this.alive) {
+          this.rightIsDown = true;
+          this.walkingRight = true;
+          this.facing = "right";
+          this.move(this.facing);
+        }
       },
       this
     );
@@ -141,17 +147,19 @@ class Jammy {
     this.jumpButton.on(
       "down",
       function (event) {
-        this.jump();
+        if (this.alive) {
+          this.jump();
+        }
       },
       this
     );
 
-
-
     this.attackButton.on(
       "down",
       function () {
-        this.shoot();
+        if (this.alive) {
+          this.shoot();
+        }
       },
       this
     );

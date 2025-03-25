@@ -7,7 +7,7 @@ class WatermelonBoss extends Phaser.Physics.Arcade.Sprite {
     scene.physics.add.existing(this);
     this.alive=true;
     // Set basic character properties
-    this.maxHP = 10;
+    this.maxHP = 60;
     this.hp = this.maxHP;
     this.walkSpeed = 15;
     this.isBouncing = false;
@@ -178,7 +178,7 @@ class WatermelonBoss extends Phaser.Physics.Arcade.Sprite {
   }
 
   bounceAround() {
-    if (!this.isBouncing) {
+    if (!this.isBouncing && this.alive) {
       if (this.bounceLoop) {
         this.bounceLoop.destroy();
       }
@@ -211,6 +211,7 @@ class WatermelonBoss extends Phaser.Physics.Arcade.Sprite {
   }
 
   swapAction() {
+if(this.alive){    
     this.faceJammy();
     const selectedAction = Phaser.Math.Between(1, 2);
     if (selectedAction === 1) {
@@ -219,7 +220,7 @@ class WatermelonBoss extends Phaser.Physics.Arcade.Sprite {
     }
     if (selectedAction === 2) {
       this.bounceAround();
-    }
+    }}
   }
 
   faceJammy() {
@@ -291,13 +292,13 @@ scene.scene.get("UIScene").setScore(this.score);
 //check for any timers and remove them
 
     if (this.actionTimer) {
-      this.actionTimer.remove();
+      this.actionTimer.destroy();
     }
     if (this.bounceLoop) {
-      this.bounceLoop.remove();
+      this.bounceLoop.destroy();
     }
     if (this.invincibilityLoop) {
-      this.invincibilityLoop.remove();
+      this.invincibilityLoop.destroy();
     }
 
 
@@ -316,14 +317,16 @@ scene.scene.get("UIScene").setScore(this.score);
     this.body.setVelocity(0);
     this.play("dead");
     this.body.setSize(this.frame.width, this.frame.height);
-    scene.tweens.add({
-      targets: this,
-      alpha: 0,
-      duration: 2000,
-      onComplete: () => {
+  
+    this.scene.bossDeathSound.play();
+    scene.time.addEvent({
+      delay: 2000,
+      callback: () => {
+        scene.scene.stop("UIScene");
         scene.scene.start("CutSceneWatermelonDefeated");
       },
-  });
-    this.scene.bossDeathSound.play();
+      callbackScope: this,
+    });
+    
   }
 }

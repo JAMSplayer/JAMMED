@@ -10,7 +10,7 @@ class Level1BossFight extends Phaser.Scene {
 
   create() {
     console.log("On Level 1 Boss Fight...");
-    this.scene.launch("UIScene")
+  
     // Stop all existing sounds and play boss battle music
     this.sound.stopAll();
     this.sound.play("BossBattle", { loop: true });
