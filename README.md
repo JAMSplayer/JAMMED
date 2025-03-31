@@ -4,7 +4,7 @@ An 8-bit platformer inspired by Jams Player, featuring retro-style gameplay and 
 CONTROLS: 
 * Move - A, D
 * Jump - Spacebar
-* Shoot - Q, Shift
+* Shoot - N, Shift
 * Pause - E
 
 Leave feedback or suggestions in issues. Enjoy! 
