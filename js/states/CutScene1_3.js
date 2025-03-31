@@ -13,7 +13,6 @@ class CutScene1_3 extends Phaser.Scene {
 	}
   
 	create() {
-	  console.log("On Cut Scene 1-3...");
   
 	  const fadeTime = 500;
   

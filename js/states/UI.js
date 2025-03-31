@@ -9,7 +9,6 @@ class UIScene extends Phaser.Scene {
   }
 
   create() {
-    console.log(this.score);
     if (!this.score) {
       this.score = 0;
     }

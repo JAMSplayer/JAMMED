@@ -132,7 +132,6 @@ class Raspberry extends Phaser.Physics.Arcade.Sprite {
           this.attack();
         },
         function () {
-          console.log(this.attacking);
           return !this.attacking;
         },
         this

@@ -57,7 +57,6 @@ class WatermelonBoss extends Phaser.Physics.Arcade.Sprite {
 
         seedYPlacements.forEach((yOffset, index) => {
           this.scene.time.delayedCall(seedDelay * index, () => {
-            console.log("seed");
             new WatermelonSeed(
               this.scene,
               this.x,

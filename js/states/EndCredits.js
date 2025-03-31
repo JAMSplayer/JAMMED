@@ -5,7 +5,6 @@ class EndCredits extends Phaser.Scene {
 
   preload() {}
   create() {
-    console.log("On End Credits...");
 
     // Bool to track state of scene
     this.sceneComplete = false;
@@ -107,7 +106,6 @@ class EndCredits extends Phaser.Scene {
       onRepeat: function () {
 
         this.textBlockIndex++;
-        console.log(this.textBlockIndex);
    
         if (this.textBlockIndex > this.textBlocks.length - 1) {
           this.textBlockIndex = 0;

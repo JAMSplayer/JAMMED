@@ -24,7 +24,6 @@ class BlueberryBomb extends Phaser.Physics.Arcade.Sprite {
       (bomb, jammy) => {
         if (!jammy.invincible) {
           bomb.die();
-          console.log(jammy);
           jammy.parentObject.takeDamage();
         }
       }

@@ -12,7 +12,6 @@ class CutSceneWatermelonDefeated extends Phaser.Scene {
 	}
   
 	create() {
-	  console.log("On Watermelon Defeated Cut Scene...");
   
 	  const fadeTime = 500;
   

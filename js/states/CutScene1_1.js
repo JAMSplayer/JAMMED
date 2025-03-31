@@ -10,7 +10,6 @@ init(){scene = this}
 	}
   
 	create() {
-	  console.log("On Cut Scene 1-1...");
   
 	  this.storyComplete = false;
 	  const fadeTime = 500;

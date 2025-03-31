@@ -9,7 +9,6 @@ class Level1BossFight extends Phaser.Scene {
   }
 
   create() {
-    console.log("On Level 1 Boss Fight...");
   
     // Stop all existing sounds and play boss battle music
     this.sound.stopAll();
@@ -145,7 +144,6 @@ class Level1BossFight extends Phaser.Scene {
   }
 
   update() {
-    console.log(this.jammy)
     this.jammy.update();
     this.enemies.getChildren().forEach((enemy) => {
       if (enemy.update) enemy.update();

@@ -7,7 +7,8 @@ var controls = {
     left: "A",
     right: "D",
     aim: "W",
-    secondaryAim: "UP"
+    secondaryAim: "UP",
+    secondaryShoot: "N",
 
 
 

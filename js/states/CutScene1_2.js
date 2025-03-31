@@ -12,7 +12,6 @@ class CutScene1_2 extends Phaser.Scene {
   }
 
   create() {
-    console.log("On Cut Scene 1-2...");
 
     // Bool to track state of scene
     this.storyComplete = false;

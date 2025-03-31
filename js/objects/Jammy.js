@@ -1,5 +1,5 @@
 class Jammy {
-  constructor(x, y, hp = 5, facing = 1) {
+  constructor(x, y, hp = 5, facing = "right") {
     this.bulletLimit = 3;
     this.maxHP = 5;
     this.hp = hp ? hp : this.maxHP;
@@ -31,7 +31,7 @@ class Jammy {
 
     this.gamepad = new VirtualGamepad(scene);
 
-    this.sprite = scene.physics.add.sprite(x, y, "jammy");
+    this.sprite = scene.physics.add.sprite(x, y, "jammy", "resting-right2");
 
     this.sprite.play("resting-right");
     this.sprite.parentObject = this;
@@ -56,7 +56,7 @@ class Jammy {
     this.secondaryAimButton = scene.input.keyboard.addKey(
       controls.secondaryAim
     );
-
+this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot);
     this.aimButton.on(
       "down",
       function () {
@@ -164,7 +164,23 @@ class Jammy {
       this
     );
 
+  
+
     this.attackButton.on("up", function () {}, this);
+
+    this.secondaryShootButton.on(
+      "down",
+      function () {
+        if (this.alive) {
+          this.shoot();
+        }
+      },
+      this
+    );
+
+    this.secondaryShootButton.on("up", function () { }, this);
+    
+
 
     this.gamepad.gamepad.touchCursor.cursorKeys.up.on(
       "down",
@@ -257,6 +273,8 @@ class Jammy {
 
   update() {
     if (this.alive) {
+      if(this.leftIsDown){this.sprite.body.setVelocityX(-this.walkSpeed);}
+      if(this.rightIsDown){this.sprite.body.setVelocityX(this.walkSpeed);}
       if (
         !this.falling &&
         !this.jumping &&
@@ -300,6 +318,10 @@ class Jammy {
 
       // Controls
     }
+    else {
+      this.sprite.body.setVelocityX(0);
+    }
+
   }
   shoot() {
     if (scene.bullets.getChildren().length < this.bulletLimit) {
@@ -498,7 +520,6 @@ class Jammy {
   }
 
   die = function () {
-    console.log("dying");
     // Make sure user cannot move
     this.controlsEnabled = false;
 
