@@ -156,15 +156,7 @@ class Level1BossFight extends Phaser.Scene {
       this.bossLifebar.guts.setCrop(this.bossLifebar.crop);
     }
 
-    // Check if boss is dead
-    if (boss && !boss.active) {
-      this.sound.stopByKey("BossBattle");
-      this.enemyProjectiles.clear(true);
-      this.time.delayedCall(4000, () => {
-        this.changeScene();
-        this.jammy.hp = this.jammy.maxHP;
-      });
-    }
+  
   }
 
   changeScene() {

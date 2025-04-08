@@ -1,11 +1,11 @@
 class WatermelonBoss extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
     super(scene, x, y, "watermelon-boss");
-    this.score=5000;
+    this.score = 5000;
     // Add to the scene
     scene.add.existing(this);
     scene.physics.add.existing(this);
-    this.alive=true;
+    this.alive = true;
     // Set basic character properties
     this.maxHP = 60;
     this.hp = this.maxHP;
@@ -51,6 +51,7 @@ class WatermelonBoss extends Phaser.Physics.Arcade.Sprite {
     this.on(
       "fire",
       function () {
+        if(this.alive){
         const velocity = this.facing === -1 ? -400 : 400;
         const seedYPlacements = [8, 32, 8, 32];
         const seedDelay = 500;
@@ -67,14 +68,14 @@ class WatermelonBoss extends Phaser.Physics.Arcade.Sprite {
           });
         });
         this.scene.time.delayedCall(2000, () => {
-          if(this.alive){
-          this.attacking = false;
-          this.firingSeeds = false;
-          this.faceJammy();
-          this.rest();
+          if (this.alive) {
+            this.attacking = false;
+            this.firingSeeds = false;
+            this.faceJammy();
+            this.rest();
           }
         });
-      },
+      }},
       this
     );
 

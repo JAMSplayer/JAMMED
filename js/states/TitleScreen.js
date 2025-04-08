@@ -15,7 +15,7 @@ console.log(this.input)
     this.input.once(
       "pointerdown",
       function () {
-      this.scene.start('Level1');
+      this.scene.start('CutScene1_1');
       this.scene.launch('UIScene',{score:0,key:'Level1'});
         this.scene.bringToTop('UIScene');
       },
