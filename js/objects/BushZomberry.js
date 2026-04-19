@@ -4,7 +4,9 @@ class BushZomberry extends Raspberry {
 
     this.hidden = true;
     this.detected = false;
-    this.emergeRange = 50;
+    // Emerges while Jammy still has room to cycle weapon (C) and fire (Q).
+    // Jammy walks ~125 px/s, so ~120 px gives roughly a second of reaction.
+    this.emergeRange = 120;
 
     this.setVisible(false);
     this.body.setEnable(false);

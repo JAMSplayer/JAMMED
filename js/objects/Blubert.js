@@ -7,7 +7,7 @@ class Blubert {
     // enemies before Jammy does, giving time to shoot the bushes out.
     this.offsetX = 140;
     this.offsetY = -44;
-    this.followSpeed = 0.2;
+    this.followSpeed = 0.09;
 
     this.scanRange = 320;
     this.scanInterval = 750;
@@ -132,6 +132,24 @@ class Blubert {
     this.trackedEnemy = null;
     this.scene.time.delayedCall(this.stunDuration, () => {
       this.stunned = false;
+    });
+  }
+
+  takeSympathyDamage() {
+    if (!this.sprite || !this.sprite.active) return;
+    // Red flash + small knockback bob — shows Blubert shares the hit.
+    this.sprite.setTint(0xff5555);
+    this.scene.time.delayedCall(180, () => {
+      if (this.sprite && this.sprite.active) this.sprite.clearTint();
+    });
+    const dir = this.jammy && this.jammy.facing === "right" ? -1 : 1;
+    this.scene.tweens.add({
+      targets: this.sprite,
+      x: this.sprite.x + 14 * dir,
+      y: this.sprite.y - 6,
+      yoyo: true,
+      duration: 120,
+      ease: "Sine.easeOut",
     });
   }
 }

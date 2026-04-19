@@ -521,6 +521,11 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
       this.controlsEnabled = false;
       this.hp--;
 
+      // Blubert feels it too — companion flashes/recoils in sympathy
+      if (scene.blubert && scene.blubert.takeSympathyDamage) {
+        scene.blubert.takeSympathyDamage();
+      }
+
       this.takingDamage = true;
       this.flashOnce();
       this.invincible = true;
