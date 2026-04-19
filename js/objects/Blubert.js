@@ -90,8 +90,11 @@ class Blubert {
       targetY = this.jammy.sprite.y + this.offsetY;
     }
 
-    this.sprite.x += (targetX - this.sprite.x) * this.followSpeed;
-    this.sprite.y += (targetY - this.sprite.y) * this.followSpeed;
+    // Track even more cautiously when locked onto an enemy —
+    // Blubert is a scout, not a dive-bomber.
+    const speed = tilting ? 0.02 : this.followSpeed;
+    this.sprite.x += (targetX - this.sprite.x) * speed;
+    this.sprite.y += (targetY - this.sprite.y) * speed;
 
     if (this.stunned) {
       this.sprite.play("blubert-stunned", true);

@@ -4,8 +4,9 @@ class BushZomberry extends Raspberry {
 
     this.hidden = true;
     this.detected = false;
-    // ms between eyes appearing (detect) and the enemy actually popping out
-    this.emergeDelayMs = 1100;
+    // ms between eyes appearing (detect) and the enemy actually popping out.
+    // Long enough for the player to read the eyes as a warning and react.
+    this.emergeDelayMs = 1700;
 
     this.setVisible(false);
     this.body.setEnable(false);
@@ -26,9 +27,12 @@ class BushZomberry extends Raspberry {
 
   setPosition(x, y, z, w) {
     super.setPosition(x, y, z, w);
+    // Only move the bush with the zomberry while it's still hidden
+    // inside the bush. Once it emerges, the bush is vegetation and
+    // the zomberry wanders off — the bush should not follow.
     if (!this.bush && typeof x === "number" && typeof y === "number") {
       this._createBushVisual(x, y);
-    } else if (this.bush && typeof x === "number" && typeof y === "number") {
+    } else if (this.bush && this.hidden && typeof x === "number" && typeof y === "number") {
       this.bush.setPosition(x, y);
     }
     return this;
