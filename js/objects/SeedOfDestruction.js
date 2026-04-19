@@ -15,10 +15,12 @@ class SeedOfDestruction extends Phaser.Physics.Arcade.Sprite {
     this.fuseMs = 2200;
     this.exploded = false;
 
-    // Arc launch — direction -1 (left) / 1 (right); aimUp lobs higher and closer
+    // Arc launch — direction -1 (left) / 1 (right); aimUp lobs higher and closer.
+    // Horizontal speed stays well above Jammy's 125px/s walk so even
+    // running forward he can't catch up to his own throw.
     const dir = direction === "left" ? -1 : 1;
-    const speedX = (aimUp ? 170 : 300) * dir;
-    const speedY = aimUp ? -520 : -380;
+    const speedX = (aimUp ? 230 : 420) * dir;
+    const speedY = aimUp ? -540 : -400;
     this.body.setVelocityX(speedX);
     this.body.setVelocityY(speedY);
 
