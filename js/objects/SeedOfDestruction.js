@@ -1,44 +1,77 @@
 class SeedOfDestruction extends Phaser.Physics.Arcade.Sprite {
   constructor(scn, x, y, direction, aimUp = false) {
-    super(scn, x, y, "seed-of-destruction", "seed1");
+    SeedOfDestruction.ensureTexture(scn);
+    super(scn, x, y, "seed-teardrop");
     scn.add.existing(this);
     scn.physics.add.existing(this);
 
     this.body.setAllowGravity(true);
-    this.body.setSize(10, 12, 3, 2);
-    this.body.setBounce(0.25);
+    this.body.setSize(12, 8, 2, 1);
+    this.body.setBounce(0.2);
 
     this.damage = 3;
     this.blastRadius = 56;
     this.selfDamageRadius = 34;
-    this.fuseMs = 1500;
+    this.fuseMs = 2200;
     this.exploded = false;
 
     // Arc launch — direction -1 (left) / 1 (right); aimUp lobs higher and closer
     const dir = direction === "left" ? -1 : 1;
-    const speedX = (aimUp ? 110 : 190) * dir;
-    const speedY = aimUp ? -320 : -230;
+    const speedX = (aimUp ? 170 : 300) * dir;
+    const speedY = aimUp ? -520 : -380;
     this.body.setVelocityX(speedX);
     this.body.setVelocityY(speedY);
 
-    if (!scn.anims.exists("seed-spin")) {
-      scn.anims.create({
-        key: "seed-spin",
-        frames: scn.anims.generateFrameNames("seed-of-destruction", { prefix: "seed", start: 1, end: 4 }),
-        frameRate: 14, repeat: -1,
-      });
-    }
-    this.play("seed-spin");
+    // Fat end points the direction of travel
+    this.setOrigin(0.5, 0.5);
 
     this.fuseTimer = scn.time.delayedCall(this.fuseMs, () => this.explode());
     if (scn.groundLayer) {
       this.groundCollider = scn.physics.add.collider(this, scn.groundLayer, () => this.explode());
+    }
+    // Detonate on enemy contact too
+    if (scn.enemies) {
+      this.enemyOverlap = scn.physics.add.overlap(this, scn.enemies, () => this.explode());
     }
 
     if (!scn.seedsOfDestruction) {
       scn.seedsOfDestruction = scn.physics.add.group();
     }
     scn.seedsOfDestruction.add(this);
+  }
+
+  static ensureTexture(scene) {
+    if (scene.textures.exists("seed-teardrop")) return;
+    // 18x10 tan tear-drop with the fat end on the right.
+    // Rotation at render time aims the fat end toward travel direction.
+    const g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xd4a676, 1);        // tan body
+    g.fillEllipse(12, 5, 12, 10);    // fat end
+    g.fillTriangle(12, 0, 12, 10, 0, 5); // tapered point
+    g.lineStyle(1, 0x7e5a34, 1);     // darker outline
+    g.strokeEllipse(12, 5, 12, 10);
+    g.beginPath();
+    g.moveTo(12, 0);
+    g.lineTo(0, 5);
+    g.lineTo(12, 10);
+    g.closePath();
+    g.strokePath();
+    // Tiny highlight for form
+    g.fillStyle(0xf0c899, 1);
+    g.fillEllipse(13, 3, 4, 2);
+    g.generateTexture("seed-teardrop", 18, 10);
+    g.destroy();
+  }
+
+  preUpdate(time, delta) {
+    super.preUpdate(time, delta);
+    if (this.exploded || !this.body) return;
+    // Rotate so the fat end always leads the velocity vector.
+    const vx = this.body.velocity.x;
+    const vy = this.body.velocity.y;
+    if (vx !== 0 || vy !== 0) {
+      this.rotation = Math.atan2(vy, vx);
+    }
   }
 
   explode() {
