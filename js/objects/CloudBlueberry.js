@@ -32,6 +32,9 @@ class CloudBlueberry extends Blueberry {
     this.returning = false;
     this.homeX = x;
     this.homeY = y;
+    // Which side the drone windups on for its next dive. Flipped after
+    // each dive so attacks come in from alternating directions.
+    this.diveSide = Math.random() < 0.5 ? -1 : 1;
   }
 
   update() {
@@ -57,10 +60,17 @@ class CloudBlueberry extends Blueberry {
 
     if (this.diving) return;
 
-    // Hunt Jammy — hover ~88px above a point Jammy is heading toward,
-    // so a straight drop actually lands on him.
-    const leadX = j.sprite.x + (j.sprite.body.velocity.x || 0) * 0.35;
-    const dx = leadX - this.x;
+    // Tracking target depends on the next attack:
+    //   drop -> hover directly above Jammy so the bomb falls on him
+    //   dive -> post up ~170px to one side as a windup so the dive
+    //           sweeps laterally through him instead of straight down.
+    let targetX;
+    if (this.nextAction === "drop") {
+      targetX = j.sprite.x;
+    } else {
+      targetX = j.sprite.x + this.diveSide * 170;
+    }
+    const dx = targetX - this.x;
     const dy = (j.sprite.y - 88) - this.y;
     const maxSpeed = 115;
     this.body.setVelocityX(Phaser.Math.Clamp(dx * 1.8, -maxSpeed, maxSpeed));
@@ -75,9 +85,14 @@ class CloudBlueberry extends Blueberry {
     const now = this.scene.time.now;
     if (now - this.lastAction >= (this.nextAction === "dive" ? this.diveCooldownMs : this.dropCooldownMs)) {
       if (this.nextAction === "dive") {
-        this.diveBomb();
-        this.lastAction = now;
-        this.nextAction = "drop";
+        // Wait until drone has actually reached the windup side (>=120px
+        // offset in the diveSide direction) so the dive is lateral.
+        const sideDelta = (this.x - j.sprite.x) * this.diveSide;
+        if (sideDelta >= 120) {
+          this.diveBomb();
+          this.lastAction = now;
+          this.nextAction = "drop";
+        }
       } else if (Math.abs(this.x - j.sprite.x) <= 24) {
         this.dropBomb();
         this.lastAction = now;
@@ -165,6 +180,8 @@ class CloudBlueberry extends Blueberry {
     if (this.dead) return;
     this.diving = false;
     this._diveTween = null;
+    // Flip windup side for the next dive so attacks alternate sides
+    this.diveSide = -this.diveSide;
     // update() resumes tracking Jammy next frame — no return tween
   }
 
