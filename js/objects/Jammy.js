@@ -23,6 +23,9 @@ class Jammy {
     this.availableWeapons = ["sonic", "seed"];
     this.seedCooldownMs = 600;
     this.lastSeedTime = 0;
+    this.seedAmmo = 4;
+    this.seedAmmoMax = 12;
+    this.lastDryClickTime = 0;
     this.controlsEnabled = true;
     this.alive = true;
     this.walkingLeft = false;
@@ -426,9 +429,27 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
   fireSeed() {
     const now = scene.time.now;
     if (now - this.lastSeedTime < this.seedCooldownMs) return;
+    if (this.seedAmmo <= 0) {
+      // Dry-fire click — throttled so it doesn't machine-gun
+      if (now - this.lastDryClickTime > 180) {
+        this.lastDryClickTime = now;
+        scene.sound.play("enemyHitSound", { volume: 0.1, rate: 0.35 });
+      }
+      return;
+    }
     this.lastSeedTime = now;
+    this.seedAmmo -= 1;
     const spawnX = this.facing === "right" ? this.sprite.x + 8 : this.sprite.x - 8;
     new SeedOfDestruction(scene, spawnX, this.sprite.y, this.facing, this.up);
+    if (SeedOfDestruction.playFireSound) SeedOfDestruction.playFireSound(scene);
+    const ui = scene.scene.get("UIScene");
+    if (ui && ui.setSeedAmmo) ui.setSeedAmmo(this.seedAmmo);
+  }
+
+  addSeedAmmo(n) {
+    this.seedAmmo = Math.min(this.seedAmmoMax, this.seedAmmo + n);
+    const ui = scene.scene.get("UIScene");
+    if (ui && ui.setSeedAmmo) ui.setSeedAmmo(this.seedAmmo);
   }
 
   move(direction) {

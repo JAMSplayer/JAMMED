@@ -54,6 +54,43 @@ class SeedOfDestruction extends Phaser.Physics.Arcade.Sprite {
     this.body.setVelocityY(speedY);
   }
 
+  // WebAudio-synthesized whistle-into-plunge fire sfx. Uses Phaser's
+  // shared AudioContext so it blends with the other scene sounds.
+  static playFireSound(scene) {
+    const ctx = scene.sound && scene.sound.context;
+    if (!ctx || typeof ctx.createOscillator !== "function") return;
+    const now = ctx.currentTime;
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0.5, now);
+    master.connect(ctx.destination);
+
+    // Whistle — high sine sweeping down ~1400Hz -> 480Hz
+    const whistle = ctx.createOscillator();
+    const wg = ctx.createGain();
+    whistle.type = "sine";
+    whistle.frequency.setValueAtTime(1400, now);
+    whistle.frequency.exponentialRampToValueAtTime(480, now + 0.18);
+    wg.gain.setValueAtTime(0.0001, now);
+    wg.gain.linearRampToValueAtTime(0.35, now + 0.015);
+    wg.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+    whistle.connect(wg).connect(master);
+    whistle.start(now);
+    whistle.stop(now + 0.22);
+
+    // Plunge — square-wave thump, delayed, sweeps 110Hz -> 45Hz
+    const thump = ctx.createOscillator();
+    const tg = ctx.createGain();
+    thump.type = "square";
+    thump.frequency.setValueAtTime(110, now + 0.15);
+    thump.frequency.exponentialRampToValueAtTime(45, now + 0.36);
+    tg.gain.setValueAtTime(0.0001, now + 0.14);
+    tg.gain.linearRampToValueAtTime(0.28, now + 0.18);
+    tg.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+    thump.connect(tg).connect(master);
+    thump.start(now + 0.14);
+    thump.stop(now + 0.44);
+  }
+
   static ensureTexture(scene) {
     if (scene.textures.exists("seed-teardrop")) return;
     // 14x8 tan tear-drop — compact, fat end on the right.

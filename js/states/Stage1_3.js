@@ -166,6 +166,16 @@ class Stage1_3 extends Phaser.Scene {
     ];
     this.cloudBlueberries.forEach(b => this.enemies.add(b));
 
+    // Seed-ammo pickups — sprinkled so you can't just spam from start.
+    // Positions chosen to reward exploration (aerial tokens, past the
+    // first bush, mid-cloud run, near the end).
+    this.seedPickups = [
+      new SeedAmmoPickup(this, 620,  120),
+      new SeedAmmoPickup(this, 1260, 128),
+      new SeedAmmoPickup(this, 1860, 112),
+      new SeedAmmoPickup(this, 2340, 120),
+    ];
+
     // Hanging thorn-fruit rigs — moving platform + prickly vine + fruit.
     // Built on top of the spawned HornedFruit instances; the platform
     // tweens vertically and the fruit + vine follow until dropped.

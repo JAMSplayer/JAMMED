@@ -30,6 +30,8 @@ class UIScene extends Phaser.Scene {
     this.weaponIcon.setDisplaySize(20, 16);
     this.weaponLabel = this.add.bitmapText(374, 22, "tempFont", "SONIC", 8)
       .setTintFill(0xffee88);
+    this.weaponAmmoText = this.add.bitmapText(374, 2, "tempFont", "", 8)
+      .setTintFill(0xffffff);
 
     // HUD only shown during gameplay scenes — hidden over title/cutscenes/credits
     this.gameplaySceneKeys = ["Level1", "Level1BossFight", "Stage1_3"];
@@ -58,6 +60,12 @@ class UIScene extends Phaser.Scene {
     }
   }
 
+  setSeedAmmo(n) {
+    if (!this.weaponAmmoText) return;
+    this.weaponAmmoText.setText(this.currentWeapon === "seed" ? `x${n}` : "");
+    this.weaponAmmoText.setTintFill(n > 0 ? 0xffffff : 0xff4444);
+  }
+
   setWeapon(weapon) {
     this.currentWeapon = weapon;
     if (!this.weaponIcon) return;
@@ -79,6 +87,15 @@ class UIScene extends Phaser.Scene {
       this.weaponIcon.setRotation(0);
       this.weaponLabel.setText("SONIC");
       this.weaponLabel.setTintFill(0xffee88);
+    }
+    // Refresh ammo readout for the new weapon
+    if (this.weaponAmmoText) {
+      if (weapon === "seed" && scene && scene.jammy) {
+        this.weaponAmmoText.setText(`x${scene.jammy.seedAmmo}`);
+        this.weaponAmmoText.setTintFill(scene.jammy.seedAmmo > 0 ? 0xffffff : 0xff4444);
+      } else {
+        this.weaponAmmoText.setText("");
+      }
     }
   }
 
