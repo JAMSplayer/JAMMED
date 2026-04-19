@@ -83,20 +83,31 @@ class CloudBlueberry extends Blueberry {
     // real chance of landing — otherwise we just wait for the drone
     // to drift overhead before committing to the drop.
     const now = this.scene.time.now;
+
+    // Track how long the drone has been continuously overhead of Jammy.
+    // Drops require a sustained hover so the attack is telegraphed and
+    // the drone isn't just trotting along at Jammy's shoulder firing.
+    if (Math.abs(this.x - j.sprite.x) <= 24) {
+      if (!this._overheadSince) this._overheadSince = now;
+    } else {
+      this._overheadSince = 0;
+    }
+    const hoverMs = this._overheadSince ? (now - this._overheadSince) : 0;
+
     if (now - this.lastAction >= (this.nextAction === "dive" ? this.diveCooldownMs : this.dropCooldownMs)) {
       if (this.nextAction === "dive") {
-        // Wait until drone has actually reached the windup side (>=120px
-        // offset in the diveSide direction) so the dive is lateral.
+        // Wait until drone has actually reached the windup side.
         const sideDelta = (this.x - j.sprite.x) * this.diveSide;
         if (sideDelta >= 120) {
           this.diveBomb();
           this.lastAction = now;
           this.nextAction = "drop";
         }
-      } else if (Math.abs(this.x - j.sprite.x) <= 24) {
+      } else if (hoverMs >= 2000) {
         this.dropBomb();
         this.lastAction = now;
         this.nextAction = "dive";
+        this._overheadSince = 0;
       }
     }
   }
@@ -132,20 +143,18 @@ class CloudBlueberry extends Blueberry {
     const startX = this.x;
     const startY = this.y;
 
-    // Lateral sweep with a wide horizontal reach so the arc doesn't
-    // come straight down from overhead. Drone flies in on its
-    // current side, dips past Jammy at roughly his body center, and
-    // exits well beyond the opposite side — giving the player a long
-    // clear line to intercept with a seed.
+    // Lateral sweep from the windup side through Jammy and a short
+    // distance past. Control Y is computed so the curve *actually*
+    // passes through Jammy's body at t=0.5 — quadratic Bezier
+    // midpoint is (start + 2*ctrl + end)/4, so solve for ctrl.
     let side = this.x < j.sprite.x ? -1 : 1;
-    // If drone was hovering near-directly above Jammy, pick a side
-    // so the sweep isn't ambiguous.
     if (Math.abs(this.x - j.sprite.x) < 40) side = Math.random() < 0.5 ? -1 : 1;
-    const horizReach = Math.max(260, Math.abs(this.x - j.sprite.x) + 140);
+    const horizReach = 160; // how far past Jammy the exit lands
     const endX = j.sprite.x - side * horizReach;
     const endY = startY;
     const midX = j.sprite.x;
-    const midY = j.sprite.y + 6;
+    const passThroughY = j.sprite.y + 6;
+    const midY = 2 * passThroughY - (startY + endY) / 2;
 
     this.body.setAllowGravity(false);
     this.facing = endX < this.x ? -1 : 1;
@@ -155,7 +164,7 @@ class CloudBlueberry extends Blueberry {
     this._diveTween = this.scene.tweens.add({
       targets: t,
       v: 1,
-      duration: 780,
+      duration: 620,
       ease: "Sine.easeInOut",
       onUpdate: () => {
         if (!this.active || this.dead) return;
