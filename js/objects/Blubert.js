@@ -80,7 +80,7 @@ class Blubert {
         this.trackedEnemy.x, this.trackedEnemy.y
       );
       const closeness = Phaser.Math.Clamp(1 - distJE / 220, 0, 1);
-      const aboveEnemy = 90 - closeness * 60;
+      const aboveEnemy = 90 - closeness * 72;
       targetY = this.trackedEnemy.y - aboveEnemy;
       tilting = true;
     } else {
