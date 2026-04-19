@@ -32,7 +32,6 @@ class Jammy {
     this.leftIsDown = false;
     this.rightIsDown = false;
     this.up = false;
-    this.down = false;
 
     this.gamepad = new VirtualGamepad(scene);
 
@@ -40,13 +39,6 @@ class Jammy {
 
     this.sprite.play("resting-right");
     this.sprite.parentObject = this;
-
-    // Overlay for the legs during angled shoot poses — same jammy
-    // frame cropped to its bottom half, kept vertical so the body
-    // tilt doesn't make Jammy's feet swing around.
-    this.legsOverlay = scene.add.sprite(x, y, "jammy", "resting-right1");
-    this.legsOverlay.setVisible(false);
-    this.legsOverlay.setDepth(101);
 
     // Set some physics for Jammy
 
@@ -68,7 +60,6 @@ class Jammy {
     this.secondaryAimButton = scene.input.keyboard.addKey(
       controls.secondaryAim
     );
-    this.aimDownButton = scene.input.keyboard.addKey(controls.aimDown);
 this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot);
     scene.input.keyboard.addCapture(controls.cycleWeapon);
     this.cycleWeaponButton = scene.input.keyboard.addKey(
@@ -118,9 +109,6 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
       },
       this
     );
-
-    this.aimDownButton.on("down", function () { this.down = true; }, this);
-    this.aimDownButton.on("up", function () { this.down = false; }, this);
 
     this.leftButton.on(
       "down",
@@ -380,34 +368,14 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
     const anim = this.facing === "right" ? "shooting-right" : "shooting-left";
     this.shootingPoseActive = true;
     this.sprite.play(anim, true);
-
-    // Rotation when aiming up or down. No dedicated angled frame in
-    // the atlas, so tilt the whole sprite and keep the legs vertical
-    // via a cropped legs-overlay sprite.
-    let tilt = 0;
-    if (this.up)   tilt = this.facing === "right" ? -0.5 : 0.5;
-    if (this.down) tilt = this.facing === "right" ?  0.5 : -0.5;
-
-    if (tilt !== 0) {
-      const frame = this.facing === "right" ? "shooting-right1" : "shooting-left1";
-      this.legsOverlay.setTexture("jammy", frame);
-      this.legsOverlay.setPosition(this.sprite.x, this.sprite.y);
-      this.legsOverlay.setCrop(0, 16, 32, 16);   // bottom half
-      this.legsOverlay.setVisible(true);
-      this.sprite.setCrop(0, 0, 32, 16);         // top half only
-      this.sprite.setRotation(tilt);
-    } else {
-      this.legsOverlay.setVisible(false);
-      this.sprite.isCropped = false;
-      this.sprite.setRotation(0);
-    }
-
+    // Tilt the whole body ~28deg when aiming up — no dedicated up-aim
+    // frame in the atlas, so we rotate the horizontal shooting pose.
+    const tilt = this.up ? (this.facing === "right" ? -0.5 : 0.5) : 0;
+    this.sprite.setRotation(tilt);
     if (this._shootPoseTimer) this._shootPoseTimer.remove(false);
     this._shootPoseTimer = scene.time.delayedCall(320, () => {
       this.shootingPoseActive = false;
       this.sprite.setRotation(0);
-      this.sprite.isCropped = false;
-      this.legsOverlay.setVisible(false);
       if (!this.alive) return;
       if (
         !this.walkingLeft &&
@@ -490,8 +458,6 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
   rest() {
     if (this.alive) {
       this.sprite.setRotation(0);
-      this.sprite.isCropped = false;
-      if (this.legsOverlay) this.legsOverlay.setVisible(false);
       if (!this.leftIsDown && !this.rightIsDown) {
         this.sprite.body.velocity.x = 0;
       }

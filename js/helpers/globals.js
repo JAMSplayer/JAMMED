@@ -8,7 +8,6 @@ var controls = {
     right: "D",
     aim: "W",
     secondaryAim: "UP",
-    aimDown: "DOWN",
     secondaryShoot: "N",
     cycleWeapon: "C",
 
