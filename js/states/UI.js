@@ -62,13 +62,21 @@ class UIScene extends Phaser.Scene {
     this.currentWeapon = weapon;
     if (!this.weaponIcon) return;
     if (weapon === "seed") {
-      this.weaponIcon.setTexture("seed-of-destruction", "seed1");
-      this.weaponIcon.setDisplaySize(16, 16);
+      // Use the same generated teardrop texture the projectile uses.
+      if (!this.textures.exists("seed-teardrop") &&
+          typeof SeedOfDestruction !== "undefined" &&
+          SeedOfDestruction.ensureTexture) {
+        SeedOfDestruction.ensureTexture(this);
+      }
+      this.weaponIcon.setTexture("seed-teardrop");
+      this.weaponIcon.setDisplaySize(18, 12);
+      this.weaponIcon.setRotation(0);
       this.weaponLabel.setText("SEEDS");
       this.weaponLabel.setTintFill(0xff9966);
     } else {
       this.weaponIcon.setTexture("audio-wave");
       this.weaponIcon.setDisplaySize(20, 16);
+      this.weaponIcon.setRotation(0);
       this.weaponLabel.setText("SONIC");
       this.weaponLabel.setTintFill(0xffee88);
     }

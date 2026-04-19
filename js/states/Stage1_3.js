@@ -10,6 +10,11 @@ class Stage1_3 extends Phaser.Scene {
   create() {
     this.sound.stopAll();
     this.sound.play("Level1MusicLoop", { loop: true });
+
+    // Make sure the teardrop texture exists before the HUD tries to show it
+    if (typeof SeedOfDestruction !== "undefined" && SeedOfDestruction.ensureTexture) {
+      SeedOfDestruction.ensureTexture(this);
+    }
     // Pink sunset sky — camera background
     this.cameras.main.setBackgroundColor("#f5a8b8");
 

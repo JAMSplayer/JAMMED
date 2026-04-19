@@ -69,6 +69,14 @@ class Blubert {
   update() {
     if (!this.jammy || !this.jammy.alive) return;
 
+    // Drop a tracked enemy that has scrolled off the visible screen.
+    if (this.trackedEnemy) {
+      const cam = this.scene.cameras.main;
+      if (!cam.worldView.contains(this.trackedEnemy.x, this.trackedEnemy.y)) {
+        this.trackedEnemy = null;
+      }
+    }
+
     let targetX, targetY, tilting = false;
     if (this.trackedEnemy && this.trackedEnemy.active &&
         !this.trackedEnemy.dead && this.trackedEnemy.scene) {
@@ -117,10 +125,13 @@ class Blubert {
     }
 
     const enemies = this.scene.enemies.getChildren();
+    const cam = this.scene.cameras.main;
     let nearest = null;
     let nearestDist = Infinity;
     for (const e of enemies) {
       if (!e || e.dead) continue;
+      // Only care about enemies currently on screen.
+      if (!cam.worldView.contains(e.x, e.y)) continue;
       const d = Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, e.x, e.y);
       if (d > this.scanRange) continue;
       if (e.hidden && typeof e.detect === "function") {
