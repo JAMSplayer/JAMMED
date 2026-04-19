@@ -26,12 +26,33 @@ class SeedOfDestruction extends Phaser.Physics.Arcade.Sprite {
     this.setOrigin(0.5, 0.5);
 
     this.fuseTimer = scn.time.delayedCall(this.fuseMs, () => this.explode());
-    if (scn.groundLayer) {
-      this.groundCollider = scn.physics.add.collider(this, scn.groundLayer, () => this.explode());
+    // Explode on any solid tilemap contact — ground, walls, death blocks, etc.
+    const blockingLayers = [
+      scn.groundLayer,
+      scn.enemyStopBlocksLayer,
+      scn.deathBlocksLayer,
+      scn.sceneChangeLayer,
+    ].filter(Boolean);
+    for (const layer of blockingLayers) {
+      scn.physics.add.collider(this, layer, () => this.explode());
     }
     // Detonate on enemy contact too
     if (scn.enemies) {
       this.enemyOverlap = scn.physics.add.overlap(this, scn.enemies, () => this.explode());
+    }
+
+    // If we spawned already overlapping an enemy (point-blank shot),
+    // detonate immediately on the next tick — damaging Jammy and
+    // stunning Blubert in the process because the seed is still
+    // inside the self-damage radius.
+    if (scn.enemies) {
+      const pbEnemy = scn.enemies.getChildren().find(e =>
+        e && !e.dead &&
+        Phaser.Math.Distance.Between(x, y, e.x, e.y) <= 18
+      );
+      if (pbEnemy) {
+        scn.time.delayedCall(0, () => this.explode());
+      }
     }
 
     if (!scn.seedsOfDestruction) {
@@ -107,13 +128,37 @@ class SeedOfDestruction extends Phaser.Physics.Arcade.Sprite {
       if (db <= this.selfDamageRadius) blu.stun();
     }
 
-    // Visual: reuse enemy-death burst if available
+    // Visual: expanding shockwave ring + yellow flash + enemy-death burst
+    const ring = this.scene.add.circle(this.x, this.y, this.blastRadius, 0xffee88, 0.35);
+    ring.setStrokeStyle(3, 0xffffff, 1);
+    ring.setScale(0.15);
+    ring.setDepth(90);
+    this.scene.tweens.add({
+      targets: ring,
+      scale: 1.2,
+      alpha: 0,
+      duration: 320,
+      ease: "Cubic.easeOut",
+      onComplete: () => ring.destroy(),
+    });
+    const flash = this.scene.add.circle(this.x, this.y, 18, 0xffffff, 0.8);
+    flash.setDepth(91);
+    this.scene.tweens.add({
+      targets: flash,
+      scale: 2.2,
+      alpha: 0,
+      duration: 180,
+      ease: "Quad.easeOut",
+      onComplete: () => flash.destroy(),
+    });
     if (this.scene.anims.exists("enemy-death")) {
       const blast = this.scene.add.sprite(this.x, this.y, "enemy-death");
-      blast.setScale(2);
+      blast.setScale(2.6);
+      blast.setDepth(92);
       blast.play("enemy-death");
       blast.once("animationcomplete", () => blast.destroy());
     }
+    this.scene.cameras.main.shake(120, 0.004);
     this.scene.sound.play("enemyDeathSound");
     this.destroy();
   }
