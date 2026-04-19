@@ -7,7 +7,7 @@ class Blubert {
     // enemies before Jammy does, giving time to shoot the bushes out.
     this.offsetX = 140;
     this.offsetY = -44;
-    this.followSpeed = 0.09;
+    this.followSpeed = 0.045;
 
     this.scanRange = 320;
     this.scanInterval = 750;

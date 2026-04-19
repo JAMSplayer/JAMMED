@@ -1,7 +1,8 @@
 // Shared cartoon-cloud bush visual used by BushZomberry and decoys.
-// Five overlapping green circles form a wide fluffy shape that sits
-// on the ground. Eyes are two small white ovals with black pupils,
-// hidden by default and revealed when Blubert tracks the bush.
+// Overlapping green lobes form a wide fluffy shape that sits on the
+// ground. Eyes are large white sclera + yellow glowing iris + black
+// pupil + an angry brow; they're hidden until Blubert's scan reveals
+// them, then pop in with a scale-up tween.
 class Bush {
   constructor(scene, x, y) {
     this.scene = scene;
@@ -26,17 +27,56 @@ class Bush {
     const base = scene.add.ellipse(0, 10, 52, 6, 0x2c5a24, 0.6);
     this.container.add(base);
 
-    // Eyes — white sclera + black pupil
-    this.leftEye = scene.add.circle(-7, -3, 3, 0xffffff);
-    this.rightEye = scene.add.circle(7, -3, 3, 0xffffff);
-    this.leftPupil = scene.add.circle(-7, -3, 1.5, 0x000000);
-    this.rightPupil = scene.add.circle(7, -3, 1.5, 0x000000);
-    this.container.add([this.leftEye, this.rightEye, this.leftPupil, this.rightPupil]);
+    // Eye group — bigger and more obviously faceful when revealed.
+    // Sclera (white) → iris (yellow glow) → pupil (black). Brow (angry) above.
+    this.leftEye = scene.add.circle(-9, -4, 5, 0xffffff);
+    this.rightEye = scene.add.circle(9, -4, 5, 0xffffff);
+    this.leftIris = scene.add.circle(-9, -4, 3.5, 0xffdd44);
+    this.rightIris = scene.add.circle(9, -4, 3.5, 0xffdd44);
+    this.leftPupil = scene.add.circle(-9, -3, 2, 0x000000);
+    this.rightPupil = scene.add.circle(9, -3, 2, 0x000000);
+    this.leftBrow = scene.add.rectangle(-9, -10, 10, 2, 0x1a1a1a);
+    this.rightBrow = scene.add.rectangle(9, -10, 10, 2, 0x1a1a1a);
+    this.leftBrow.setRotation(0.25);
+    this.rightBrow.setRotation(-0.25);
+
+    this.eyeParts = [
+      this.leftEye, this.rightEye,
+      this.leftIris, this.rightIris,
+      this.leftPupil, this.rightPupil,
+      this.leftBrow, this.rightBrow,
+    ];
+    this.container.add(this.eyeParts);
     this.setEyesVisible(false);
   }
 
   setEyesVisible(v) {
-    [this.leftEye, this.rightEye, this.leftPupil, this.rightPupil].forEach(e => e.setVisible(v));
+    this.eyeParts.forEach(e => e.setVisible(v));
+    if (v) {
+      // Pop-in: scale from 0 with a bit of overshoot so it reads as "eyes open"
+      this.eyeParts.forEach(e => {
+        e.setScale(0.2);
+        this.scene.tweens.add({
+          targets: e,
+          scaleX: 1, scaleY: 1,
+          duration: 180,
+          ease: "Back.easeOut",
+        });
+      });
+    }
+  }
+
+  // Shake the whole bush briefly — used when the zomberry bursts out
+  shake(ms = 260) {
+    const baseX = this.container.x;
+    this.scene.tweens.add({
+      targets: this.container,
+      x: { from: baseX - 3, to: baseX + 3 },
+      duration: 40,
+      yoyo: true,
+      repeat: Math.max(1, Math.floor(ms / 80)),
+      onComplete: () => { this.container.x = baseX; },
+    });
   }
 
   setPosition(x, y) {

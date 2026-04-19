@@ -45,11 +45,33 @@ class BushZomberry extends Raspberry {
   emerge() {
     if (!this.hidden || this.dead) return;
     this.hidden = false;
+
+    // Burst out of the top of the bush: start small at bush center,
+    // scale up to full size, and pop upward with a hop.
+    const bushCenterY = this.bush ? this.bush.container.y : this.y - 18;
+    this.setPosition(this.x, bushCenterY);
     this.setVisible(true);
+    this.setScale(0.2);
+    this.scene.tweens.add({
+      targets: this,
+      scaleX: 1, scaleY: 1,
+      duration: 180,
+      ease: "Back.easeOut",
+    });
+
+    // Face Jammy as it emerges so the follow-up attack reads right
+    if (this.scene.jammy && this.scene.jammy.sprite) {
+      this.facing = this.scene.jammy.sprite.x > this.x ? 1 : -1;
+    }
+
     this.body.setEnable(true);
     this.body.setAllowGravity(true);
-    // Bush stays behind the zomberry as a visual remnant (eyes off)
-    if (this.bush) this.bush.setEyesVisible(false);
+    this.body.setVelocityY(-220);
+
+    if (this.bush) {
+      this.bush.setEyesVisible(false);
+      this.bush.shake(300);
+    }
   }
 
   explodeInBush() {
