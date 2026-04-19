@@ -13,21 +13,40 @@ class SeedAmmoPickup extends Phaser.Physics.Arcade.Sprite {
     scn.add.existing(this);
     scn.physics.add.existing(this);
     this.body.setAllowGravity(false);
-    this.setScale(1.15);
+    this.setScale(0.9);
     this.setRotation(-0.2);
     this.setTint(0xffd188);
 
     scn.collectibles.add(this);
 
-    // Subtle pulse so it reads as a pickup without dominating the screen
+    // Small yellow ring around the seed so it reads as a pickup
+    // without the teardrop itself being oversized.
+    this.glowRing = scn.add.circle(x, y, 10, 0xffd188, 0);
+    this.glowRing.setStrokeStyle(1.5, 0xffde88, 0.85);
+    this.glowRing.setDepth(this.depth - 1);
     scn.tweens.add({
-      targets: this,
-      scale: 1.35,
-      duration: 560,
+      targets: this.glowRing,
+      scale: 1.3,
+      alpha: 0.2,
+      duration: 620,
       yoyo: true,
       repeat: -1,
       ease: "Sine.easeInOut",
     });
+    // Tiny pulse on the seed itself
+    scn.tweens.add({
+      targets: this,
+      scale: 1.05,
+      duration: 620,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+  }
+
+  preUpdate(time, delta) {
+    super.preUpdate(time, delta);
+    if (this.glowRing) this.glowRing.setPosition(this.x, this.y);
   }
 
   effect() {
@@ -37,6 +56,7 @@ class SeedAmmoPickup extends Phaser.Physics.Arcade.Sprite {
     if (scene.sound && scene.cache.audio.exists("powerUpSound")) {
       scene.sound.play("powerUpSound", { volume: 0.6, rate: 1.2 });
     }
+    if (this.glowRing) { this.glowRing.destroy(); this.glowRing = null; }
     this.destroy();
   }
 }

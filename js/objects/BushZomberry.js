@@ -8,10 +8,10 @@ class BushZomberry extends Raspberry {
     // Long enough for the player to read the eyes as a warning and react.
     this.emergeDelayMs = 1700;
 
-    // Zomberries are legitimately dangerous — almost as fast as Jammy
-    // (walkSpeed 125). They overtake the player if he doesn't fight back.
-    this.walkSpeed = 85;
-    this.runningSpeed = 115;
+    // Zomberries match Jammy's walkSpeed 125 when chasing, so failing
+    // to clear a bush before it emerges genuinely threatens him.
+    this.walkSpeed = 90;
+    this.runningSpeed = 125;
 
     this.setVisible(false);
     this.body.setEnable(false);

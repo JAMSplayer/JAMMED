@@ -15,9 +15,13 @@ class CloudBlueberry extends Blueberry {
     this.cloud = new Cloud(scn, x, y);
 
     // Ditch the vanilla "oscillate horizontally + drop bomb" loop —
-    // this variant has its own AI below.
-    if (this.roamTimer) { this.roamTimer.destroy(); this.roamTimer = null; }
-    if (this.bombTimer) { this.bombTimer.destroy(); this.bombTimer = null; }
+    // this variant has its own AI below. Parent Blueberry.die() will
+    // call .destroy() on these refs, so we leave no-op stubs behind
+    // instead of nulling them (otherwise die() throws on the null).
+    if (this.roamTimer) this.roamTimer.destroy();
+    if (this.bombTimer) this.bombTimer.destroy();
+    this.roamTimer = { destroy: () => {} };
+    this.bombTimer = { destroy: () => {} };
 
     this.triggerDistance = 120;   // "almost underneath" trigger
     this.dropCooldownMs = 1400;
@@ -146,6 +150,11 @@ class CloudBlueberry extends Blueberry {
   }
 
   die() {
+    if (this.dead) return;
+    // Cancel any in-flight dive so the onUpdate doesn't keep writing
+    // to x/y while super.die is playing the death anim.
+    if (this._diveTween) { this._diveTween.remove(); this._diveTween = null; }
+    this.diving = false;
     if (this.cloud) {
       // Leave the cloud behind — it's just a cloud, harmless.
       this.cloud = null;

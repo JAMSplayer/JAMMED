@@ -166,10 +166,11 @@ class Stage1_3 extends Phaser.Scene {
     ];
     this.cloudBlueberries.forEach(b => this.enemies.add(b));
 
-    // Seed-ammo pickups — sprinkled so you can't just spam from start.
-    // Positions chosen to reward exploration (aerial tokens, past the
-    // first bush, mid-cloud run, near the end).
+    // Seed-ammo pickups — spread so ammo is always a resource concern.
+    // First one sits before the first bush so Jammy starts the encounter
+    // armed with more than his baseline single shot.
     this.seedPickups = [
+      new SeedAmmoPickup(this, 300,  128),
       new SeedAmmoPickup(this, 620,  120),
       new SeedAmmoPickup(this, 1260, 128),
       new SeedAmmoPickup(this, 1860, 112),

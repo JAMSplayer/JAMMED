@@ -21,9 +21,9 @@ class Jammy {
     this.antTokens = 0;
     this.currentWeapon = "sonic";
     this.availableWeapons = ["sonic", "seed"];
-    this.seedCooldownMs = 600;
+    this.seedCooldownMs = 320;
     this.lastSeedTime = 0;
-    this.seedAmmo = 4;
+    this.seedAmmo = 1;
     this.seedAmmoMax = 12;
     this.lastDryClickTime = 0;
     this.controlsEnabled = true;
