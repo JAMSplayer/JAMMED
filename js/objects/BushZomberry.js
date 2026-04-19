@@ -98,6 +98,14 @@ class BushZomberry extends Raspberry {
   update() {
     if (this.hidden) return;
     super.update();
+    if (this.dead || this.attacking) return;
+    const cam = this.scene.cameras.main;
+    if (!cam.worldView.contains(this.x, this.y)) return;
+    // Once emerged and in view, a zomberry hunts Jammy continuously
+    // rather than relying on the inherited 200/150px awareness rings.
+    this.jammyInRange = true;
+    this.inPursuit = true;
+    this.run(this.facing);
   }
 
   die() {

@@ -34,13 +34,10 @@ class CloudBlueberry extends Blueberry {
     if (this.dead) return;
     const j = this.scene.jammy;
     if (!j || !j.alive) {
-      // Jammy is dead/gone — halt any active dive/return tween and
-      // stop motion so we don't drift off or collide after death.
+      // Jammy is dead/gone — halt any active dive and stop motion.
       if (this._diveTween) { this._diveTween.remove(); this._diveTween = null; }
-      if (this._returnTween) { this._returnTween.remove(); this._returnTween = null; }
       if (this.body) this.body.setVelocity(0, 0);
       this.diving = false;
-      this.returning = false;
       return;
     }
 
@@ -54,7 +51,17 @@ class CloudBlueberry extends Blueberry {
       return;
     }
 
-    if (this.diving || this.returning) return;
+    if (this.diving) return;
+
+    // Hunt Jammy — hover ~88px above him, tracking his x/y across
+    // the stage. Doesn't give up until killed.
+    const dx = j.sprite.x - this.x;
+    const dy = (j.sprite.y - 88) - this.y;
+    const maxSpeed = 95;
+    this.body.setVelocityX(Phaser.Math.Clamp(dx * 1.8, -maxSpeed, maxSpeed));
+    this.body.setVelocityY(Phaser.Math.Clamp(dy * 1.8, -maxSpeed, maxSpeed));
+    this.facing = j.sprite.x < this.x ? -1 : 1;
+    this.play(this.facing === 1 ? "oscillating-right" : "oscillating-left", true);
 
     // Alternate attacks on a simple cooldown
     const now = this.scene.time.now;
@@ -68,14 +75,6 @@ class CloudBlueberry extends Blueberry {
         this.nextAction = "dive";
       }
     }
-
-    // Subtle hover drift toward Jammy so it doesn't just sit in one spot
-    const targetX = Phaser.Math.Clamp(j.sprite.x, this.homeX - 80, this.homeX + 80);
-    const drift = Phaser.Math.Clamp((targetX - this.x) * 0.04, -35, 35);
-    this.body.setVelocityX(drift);
-    this.body.setVelocityY(0);
-    this.facing = j.sprite.x < this.x ? -1 : 1;
-    this.play(this.facing === 1 ? "oscillating-right" : "oscillating-left", true);
   }
 
   emerge() {
@@ -142,15 +141,8 @@ class CloudBlueberry extends Blueberry {
       if (d < 22) j.takeDamage();
     }
     this.diving = false;
-    this.returning = true;
-    this._returnTween = this.scene.tweens.add({
-      targets: this,
-      x: this.homeX,
-      y: this.homeY + 18,
-      duration: 500,
-      ease: "Sine.easeOut",
-      onComplete: () => { this.returning = false; this._returnTween = null; },
-    });
+    this._diveTween = null;
+    // update() resumes tracking Jammy next frame — no return tween
   }
 
   die() {
