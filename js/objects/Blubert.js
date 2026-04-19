@@ -189,6 +189,16 @@ class Blubert {
 
   takeSympathyDamage() {
     if (this.dead || !this.sprite || !this.sprite.active) return;
+    // Only share the hit if Blubert was actually close enough to the
+    // action to plausibly be harmed — out scouting a bush 300px ahead
+    // shouldn't cost him HP for a drone pegging Jammy behind him.
+    if (this.jammy && this.jammy.sprite) {
+      const d = Phaser.Math.Distance.Between(
+        this.sprite.x, this.sprite.y,
+        this.jammy.sprite.x, this.jammy.sprite.y
+      );
+      if (d > 110) return;
+    }
     this.hp -= 1;
     // Red flash + small knockback bob
     this.sprite.setTint(0xff5555);

@@ -102,16 +102,17 @@ class SeedOfDestruction extends Phaser.Physics.Arcade.Sprite {
       this.rotation = Math.atan2(vy, vx);
     }
     // Soft homing toward whatever Blubert is currently tracking.
-    // Jammy still has to aim and fire; this just pulls a reasonable
-    // throw onto the marked target instead of replacing aim.
+    // Pull ramps with the inverse of distance so seeds close to the
+    // target curve harder (enough to actually connect) while distant
+    // shots still feel like Jammy's own arc.
     const blu = this.scene.blubert;
     if (blu && blu.trackedEnemy && blu.trackedEnemy.active && !blu.trackedEnemy.dead) {
       const e = blu.trackedEnemy;
       const dx = e.x - this.x;
       const dy = e.y - this.y;
       const dist = Math.hypot(dx, dy);
-      if (dist > 1 && dist < 320) {
-        const pull = 110;
+      if (dist > 4 && dist < 360) {
+        const pull = Phaser.Math.Clamp(520 - dist, 160, 420);
         this.body.setAccelerationX((dx / dist) * pull);
         this.body.setAccelerationY((dy / dist) * pull);
         return;
