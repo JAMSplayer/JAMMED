@@ -368,14 +368,12 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
     const anim = this.facing === "right" ? "shooting-right" : "shooting-left";
     this.shootingPoseActive = true;
     this.sprite.play(anim, true);
-    // Tilt the whole body ~28deg when aiming up — no dedicated up-aim
-    // frame in the atlas, so we rotate the horizontal shooting pose.
-    const tilt = this.up ? (this.facing === "right" ? -0.5 : 0.5) : 0;
-    this.sprite.setRotation(tilt);
+    // Up-aim needs its own sprite frame to look right — the atlas
+    // doesn't have one yet, so no tilt. Left as-is until we have
+    // shooting-up-right/left frames in jammy.json.
     if (this._shootPoseTimer) this._shootPoseTimer.remove(false);
     this._shootPoseTimer = scene.time.delayedCall(320, () => {
       this.shootingPoseActive = false;
-      this.sprite.setRotation(0);
       if (!this.alive) return;
       if (
         !this.walkingLeft &&
@@ -457,7 +455,6 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
 
   rest() {
     if (this.alive) {
-      this.sprite.setRotation(0);
       if (!this.leftIsDown && !this.rightIsDown) {
         this.sprite.body.velocity.x = 0;
       }
