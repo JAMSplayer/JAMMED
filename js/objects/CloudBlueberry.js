@@ -27,7 +27,9 @@ class CloudBlueberry extends Blueberry {
     this.dropCooldownMs = 1400;
     this.diveCooldownMs = 2200;
     this.lastAction = 0;
-    this.nextAction = "drop";     // alternate drop / dive
+    // First attack is a dive so the player immediately sees the drone
+    // as a kinetic threat; drops come after.
+    this.nextAction = "dive";
     this.diving = false;
     this.returning = false;
     this.homeX = x;
@@ -72,9 +74,15 @@ class CloudBlueberry extends Blueberry {
     }
     const dx = targetX - this.x;
     const dy = (j.sprite.y - 88) - this.y;
-    const maxSpeed = 115;
-    this.body.setVelocityX(Phaser.Math.Clamp(dx * 1.8, -maxSpeed, maxSpeed));
-    this.body.setVelocityY(Phaser.Math.Clamp(dy * 1.8, -maxSpeed, maxSpeed));
+    // Match Jammy's horizontal pace and correct toward the target —
+    // lets the drone keep 2s overhead hover locked while Jammy is
+    // running rather than lagging 10px/s behind his walkSpeed.
+    const jvx = j.sprite.body.velocity.x || 0;
+    const maxSpeed = 150;
+    const targetVx = Phaser.Math.Clamp(jvx + dx * 3, -maxSpeed, maxSpeed);
+    const targetVy = Phaser.Math.Clamp(dy * 2.2, -maxSpeed, maxSpeed);
+    this.body.setVelocityX(targetVx);
+    this.body.setVelocityY(targetVy);
     this.facing = j.sprite.x < this.x ? -1 : 1;
     this.play(this.facing === 1 ? "oscillating-right" : "oscillating-left", true);
 
@@ -153,7 +161,10 @@ class CloudBlueberry extends Blueberry {
     const endX = j.sprite.x - side * horizReach;
     const endY = startY;
     const midX = j.sprite.x;
-    const passThroughY = j.sprite.y + 6;
+    // Dip through Jammy's chest/head, not his feet — keeps the low
+    // point inside the peak of a seed's arc so shooting the drone
+    // mid-dive is actually viable.
+    const passThroughY = j.sprite.y - 10;
     const midY = 2 * passThroughY - (startY + endY) / 2;
 
     this.body.setAllowGravity(false);
