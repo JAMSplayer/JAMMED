@@ -81,6 +81,7 @@ class Blubert {
     }
 
     let targetX, targetY, tilting = false;
+    let trackingCloseness = 0;
     if (this.trackedEnemy && this.trackedEnemy.active &&
         !this.trackedEnemy.dead && this.trackedEnemy.scene) {
       targetX = this.trackedEnemy.x;
@@ -90,8 +91,8 @@ class Blubert {
         this.jammy.sprite.x, this.jammy.sprite.y,
         this.trackedEnemy.x, this.trackedEnemy.y
       );
-      const closeness = Phaser.Math.Clamp(1 - distJE / 220, 0, 1);
-      const aboveEnemy = 90 - closeness * 72;
+      trackingCloseness = Phaser.Math.Clamp(1 - distJE / 220, 0, 1);
+      const aboveEnemy = 90 - trackingCloseness * 72;
       targetY = this.trackedEnemy.y - aboveEnemy;
       tilting = true;
     } else {
@@ -101,9 +102,12 @@ class Blubert {
       targetY = this.jammy.sprite.y + this.offsetY;
     }
 
-    // Track even more cautiously when locked onto an enemy —
-    // Blubert is a scout, not a dive-bomber.
-    const speed = tilting ? 0.02 : this.followSpeed;
+    // Track cautiously when far, but commit as the fight closes —
+    // 0.02 when far (closeness 0) ramps up to 0.11 at close range,
+    // so he stays usefully near the action instead of lagging behind.
+    const speed = tilting
+      ? 0.02 + trackingCloseness * 0.09
+      : this.followSpeed;
     this.sprite.x += (targetX - this.sprite.x) * speed;
     this.sprite.y += (targetY - this.sprite.y) * speed;
 

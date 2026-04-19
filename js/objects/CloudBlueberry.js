@@ -98,8 +98,13 @@ class CloudBlueberry extends Blueberry {
   }
 
   dropBomb() {
-    // Reuse the parent drop (creates a BlueberryBomb below this drone)
-    super.dropBomb();
+    // Predict where Jammy will be ~0.4s from now and drop so the
+    // bomb actually lands on him rather than directly below the drone.
+    const j = this.scene.jammy;
+    if (!j || !j.alive) { super.dropBomb(); return; }
+    const predictedX = j.sprite.x + (j.sprite.body.velocity.x || 0) * 0.4;
+    const bomb = new BlueberryBomb(this.scene, predictedX, this.y + 8);
+    this.scene.enemies.add(bomb);
   }
 
   diveBomb() {
@@ -107,18 +112,9 @@ class CloudBlueberry extends Blueberry {
     const j = this.scene.jammy;
     const startX = this.x;
     const startY = this.y;
-    const targetX = j.sprite.x;
-    const targetY = j.sprite.y - 8;
-
-    // Quadratic Bezier control point: well above and slightly past the
-    // start so the drone rises into a hawk-like arc before plunging
-    // steeply onto Jammy.
-    const midX = (startX + targetX) / 2;
-    const midY = Math.min(startY, targetY) - 62;
-
-    this.facing = targetX < this.x ? -1 : 1;
-    this.play(this.facing === 1 ? "oscillating-right" : "oscillating-left", true);
     this.body.setAllowGravity(false);
+    this.facing = j.sprite.x < this.x ? -1 : 1;
+    this.play(this.facing === 1 ? "oscillating-right" : "oscillating-left", true);
 
     const t = { v: 0 };
     this._diveTween = this.scene.tweens.add({
@@ -128,6 +124,13 @@ class CloudBlueberry extends Blueberry {
       ease: "Quad.easeIn",
       onUpdate: () => {
         if (!this.active || this.dead) return;
+        const jm = this.scene.jammy;
+        if (!jm || !jm.alive) return;
+        // Lead slightly so the dive intercepts Jammy's current motion
+        const targetX = jm.sprite.x + (jm.sprite.body.velocity.x || 0) * 0.18;
+        const targetY = jm.sprite.y - 8;
+        const midX = (startX + targetX) / 2;
+        const midY = Math.min(startY, targetY) - 62;
         const u = 1 - t.v;
         this.x = u*u*startX + 2*u*t.v*midX + t.v*t.v*targetX;
         this.y = u*u*startY + 2*u*t.v*midY + t.v*t.v*targetY;

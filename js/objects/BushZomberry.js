@@ -55,6 +55,14 @@ class BushZomberry extends Raspberry {
     if (!this.hidden || this.dead) return;
     this.hidden = false;
 
+    // Kill the inherited 500ms rest/roam timer — our update() drives
+    // the chase every frame, and the parent timer was periodically
+    // zeroing velocity, making zomberries feel slower than Jammy.
+    if (this.chaseTimer) {
+      this.chaseTimer.remove(false);
+      this.chaseTimer = null;
+    }
+
     // Burst out of the top of the bush: start small at bush center,
     // scale up to full size, and pop upward with a hop.
     const bushCenterY = this.bush ? this.bush.container.y : this.y - 18;
