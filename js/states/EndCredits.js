@@ -131,32 +131,32 @@ this.bottomTextTween= this.tweens.add({
   }
  
 
-  initBreadTokens() {
+  initAntTokens() {
     // Initiate group to store Bread Tokens
     this.collectibles = this.add.group();
 
     // Add bread tokens to stage and center anchor each
-    this.finalBreadTokenOutlines = [
-      this.add.image(centerX - 32, centerY, "bread-token-outline-hud"),
-      this.add.image(centerX - 16, centerY, "bread-token-outline-hud"),
-      this.add.image(centerX, centerY, "bread-token-outline-hud"),
-      this.add.image(centerX + 16, centerY, "bread-token-outline-hud"),
-      this.add.image(centerX + 32, centerY, "bread-token-outline-hud"),
+    this.finalAntTokenOutlines = [
+      this.add.image(centerX - 32, centerY, "ant-token-outline-hud"),
+      this.add.image(centerX - 16, centerY, "ant-token-outline-hud"),
+      this.add.image(centerX, centerY, "ant-token-outline-hud"),
+      this.add.image(centerX + 16, centerY, "ant-token-outline-hud"),
+      this.add.image(centerX + 32, centerY, "ant-token-outline-hud"),
     ];
-    for (var i = 0; i < this.finalBreadTokenOutlines.length; i++) {
-      this.finalBreadTokenOutlines[i].anchor.setTo(0.5, 0.5);
+    for (var i = 0; i < this.finalAntTokenOutlines.length; i++) {
+      this.finalAntTokenOutlines[i].anchor.setTo(0.5, 0.5);
     }
 
     // Add animated bread tokens and hide them
-    this.finalBreadTokens = [
-      new BreadToken(this, centerX - 32, centerY),
-      new BreadToken(this, centerX - 16, centerY),
-      new BreadToken(this, centerX, centerY),
-      new BreadToken(this, centerX + 16, centerY),
-      new BreadToken(this, centerX + 32, centerY),
+    this.finalAntTokens = [
+      new AntToken(this, centerX - 32, centerY),
+      new AntToken(this, centerX - 16, centerY),
+      new AntToken(this, centerX, centerY),
+      new AntToken(this, centerX + 16, centerY),
+      new AntToken(this, centerX + 32, centerY),
     ];
-    for (var i = 0; i < this.finalBreadTokens.length; i++) {
-      this.finalBreadTokens[i].alpha = 0;
+    for (var i = 0; i < this.finalAntTokens.length; i++) {
+      this.finalAntTokens[i].alpha = 0;
     }
   }
   transitionToNextScene() {

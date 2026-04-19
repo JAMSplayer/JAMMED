@@ -18,7 +18,11 @@ class Jammy {
     this.jumpHoldTime = 160;
     this.jumpVelocity = -300;
     this.facing = facing ? facing : "right";
-    this.breadTokens = 0;
+    this.antTokens = 0;
+    this.currentWeapon = "sonic";
+    this.availableWeapons = ["sonic", "seed"];
+    this.seedCooldownMs = 600;
+    this.lastSeedTime = 0;
     this.controlsEnabled = true;
     this.alive = true;
     this.walkingLeft = false;
@@ -57,6 +61,22 @@ class Jammy {
       controls.secondaryAim
     );
 this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot);
+    scene.input.keyboard.addCapture(controls.cycleWeapon);
+    this.cycleWeaponButton = scene.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes[controls.cycleWeapon] || controls.cycleWeapon
+    );
+    this.cycleWeaponButton.on(
+      "down",
+      function () {
+        if (!this.alive || !this.controlsEnabled) return;
+        if (this.availableWeapons.length <= 1) return;
+        const i = this.availableWeapons.indexOf(this.currentWeapon);
+        this.currentWeapon = this.availableWeapons[(i + 1) % this.availableWeapons.length];
+        const ui = scene.scene.get("UIScene");
+        if (ui && ui.setWeapon) ui.setWeapon(this.currentWeapon);
+      },
+      this
+    );
     this.aimButton.on(
       "down",
       function () {
@@ -281,6 +301,7 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
         !this.walkingLeft &&
         !this.walkingRight &&
         !this.wasWalking &&
+        !this.shootingPoseActive &&
         (this.sprite.body.touching.down || this.sprite.body.blocked.down)
       ) {
         this.rest();
@@ -293,7 +314,10 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
         }
       }
 
-      if (this.sprite.body.touching.down || this.sprite.body.blocked.down) {
+      if (
+        (this.sprite.body.touching.down || this.sprite.body.blocked.down) &&
+        this.sprite.body.velocity.y >= 0
+      ) {
         this.canDoubleJump = false;
         this.jumping = false;
         this.falling = false;
@@ -324,6 +348,42 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
 
   }
   shoot() {
+    if (this.currentWeapon === "seed") {
+      this.fireSeed();
+    } else {
+      this.fireSonic();
+    }
+    this.playShootingPose();
+  }
+
+  playShootingPose() {
+    // Angry standing-still-firing sprite — only while stationary
+    const stationary =
+      !this.walkingLeft &&
+      !this.walkingRight &&
+      !this.jumping &&
+      !this.falling &&
+      (this.sprite.body.touching.down || this.sprite.body.blocked.down);
+    if (!stationary) return;
+    const anim = this.facing === "right" ? "shooting-right" : "shooting-left";
+    this.shootingPoseActive = true;
+    this.sprite.play(anim, true);
+    if (this._shootPoseTimer) this._shootPoseTimer.remove(false);
+    this._shootPoseTimer = scene.time.delayedCall(320, () => {
+      this.shootingPoseActive = false;
+      if (!this.alive) return;
+      if (
+        !this.walkingLeft &&
+        !this.walkingRight &&
+        !this.jumping &&
+        !this.falling
+      ) {
+        this.rest();
+      }
+    });
+  }
+
+  fireSonic() {
     if (scene.bullets.getChildren().length < this.bulletLimit) {
       if (this.facing == "right") {
         let audiowave = new AudioWave(
@@ -358,6 +418,14 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
         this
       );
     }
+  }
+
+  fireSeed() {
+    const now = scene.time.now;
+    if (now - this.lastSeedTime < this.seedCooldownMs) return;
+    this.lastSeedTime = now;
+    const spawnX = this.facing === "right" ? this.sprite.x + 8 : this.sprite.x - 8;
+    new SeedOfDestruction(scene, spawnX, this.sprite.y, this.facing, this.up);
   }
 
   move(direction) {

@@ -103,7 +103,7 @@ class CutSceneWatermelonDefeated extends Phaser.Scene {
 		duration: fadeTime,
 		onComplete: () => {
 			this.sound.stopAll();
-		  this.scene.start("EndCredits");
+		  this.scene.start("Stage1_3");
 		
 		},
 	  });

@@ -22,6 +22,7 @@ console.log(this.input)
       this
     );
 
+
     // display the background
     var background = this.add.sprite(0, 0, "titleScreenBg");
     let centerX = this.cameras.main.centerX;

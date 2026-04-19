@@ -1,7 +1,7 @@
 var scene
 
 var controls = {
-    
+
     shoot: "Q",
     jump: "SPACE",
     left: "A",
@@ -9,6 +9,7 @@ var controls = {
     aim: "W",
     secondaryAim: "UP",
     secondaryShoot: "N",
+    cycleWeapon: "TAB",
 
 
 

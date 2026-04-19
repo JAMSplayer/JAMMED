@@ -1,56 +1,45 @@
-class Level1 extends Phaser.Scene {
+class Stage1_3 extends Phaser.Scene {
   constructor() {
-    super({ key: "Level1" });
+    super({ key: "Stage1_3" });
   }
 
   preload() {
-    // Load necessary assets here if needed
     scene = this;
   }
 
   create() {
-    // Start music and sound effects
-    
     this.sound.stopAll();
     this.sound.play("Level1MusicLoop", { loop: true });
-    // Set the background color
-    this.cameras.main.setBackgroundColor("#940084");
+    this.cameras.main.setBackgroundColor("#2a184a");
 
-    // Add the tilemap
     this.map = this.make.tilemap({
-      key: "level1Alt",
+      key: "stage1_3",
       tileWidth: 16,
       tileHeight: 16,
     });
     const tileset = this.map.addTilesetImage("custom-city-tiles");
-    // Create layers from tilemap
+
     this.backgroundLayer = this.map.createLayer("BackgroundLayer", tileset);
     this.groundLayer = this.map.createLayer("GroundLayer", tileset);
-    this.enemyStopBlocksLayer = this.map.createLayer(
-      "EnemyStopBlocks",
-      tileset
-    );
+    this.enemyStopBlocksLayer = this.map.createLayer("EnemyStopBlocks", tileset);
     this.deathBlocksLayer = this.map.createLayer("DeathBlocksLayer", tileset);
     this.sceneChangeLayer = this.map.createLayer("SceneChangeLayer", tileset);
 
-    // Make invisible layers transparent
     this.enemyStopBlocksLayer.setAlpha(0);
     this.deathBlocksLayer.setAlpha(0);
     this.sceneChangeLayer.setAlpha(0);
 
-    // Enable collision on layers
     this.groundLayer.setCollisionByExclusion(-1);
     this.deathBlocksLayer.setCollisionByExclusion(-1);
     this.sceneChangeLayer.setCollisionByExclusion(-1);
     this.enemyStopBlocksLayer.setCollisionByExclusion(-1);
 
-    // Create groups for bullets, enemies, collectibles, and enemy projectiles
     this.bullets = this.physics.add.group();
     this.collectibles = this.physics.add.group();
     this.enemies = this.add.group();
     this.enemyProjectiles = this.physics.add.group();
 
-    // Convert tiles into game objects
+    // Tilemap-driven spawns
     this.map.createFromObjects("PowerUpsLayer", {
       name: "PowerUp",
       key: "power-up",
@@ -65,42 +54,37 @@ class Level1 extends Phaser.Scene {
       key: "raspberry",
       classType: Raspberry,
     });
-    this.map.createFromObjects("BlueberryLayer", {
-      key: "blueberry",
-      classType: Blueberry,
+    this.map.createFromObjects("BushZomberryLayer", {
+      name: "BushZomberry",
+      key: "raspberry",
+      classType: BushZomberry,
     });
-    this.map.createFromObjects("PineappleLayer", {
-      name: "Pineapple",
-      key: "pineapple",
-      classType: Pineapple,
+    this.map.createFromObjects("HornedFruitLayer", {
+      name: "HornedFruit",
+      key: "horned-fruit",
+      classType: HornedFruit,
+    });
+    this.map.createFromObjects("WatermelonSnapperLayer", {
+      name: "WatermelonSnapper",
+      key: "watermelon-snapper",
+      classType: WatermelonSnapper,
     });
 
-    // Create the foreground layer
-    this.foreGroundLayer = this.map.createLayer("ForegroundLayer", tileset);
-
-    // Enable controls
-
-    // Update HUD lifebar
-
-    // Create and configure Jammy
+    // Jammy
     if (this.jammyData) {
       this.jammy = new Jammy(
         this.jammyData.nextX,
         this.jammyData.nextY,
         this.jammyData.hp,
-        this.jammyData.velX,
-        this.jammyData.velY,
-        this.jammyData.facing,
-        this.jammyData.levelTokensCollected
+        this.jammyData.facing
       );
     } else {
-      this.jammy = new Jammy(132, 100);
+      this.jammy = new Jammy(40, 100);
     }
     this.jammy.sprite.setDepth(100);
     this.jammy.controlsEnabled = true;
     this.children.bringToTop(this.jammy.sprite);
 
-    // Make the camera follow Jammy
     this.cameras.main.startFollow(this.jammy.sprite);
     this.cameras.main.setBounds(
       0,
@@ -108,7 +92,8 @@ class Level1 extends Phaser.Scene {
       this.map.widthInPixels,
       this.map.heightInPixels
     );
-    // Check for collectibles and award tokens
+
+    // Collisions
     this.physics.add.overlap(
       this.jammy.sprite,
       this.collectibles,
@@ -116,9 +101,6 @@ class Level1 extends Phaser.Scene {
         collectible.effect();
       }
     );
-
-    //create collision between Jammy and tilemap
-
     this.physics.add.collider(this.jammy.sprite, this.groundLayer);
     this.physics.add.collider(this.jammy.sprite, this.deathBlocksLayer, () =>
       this.jammy.instantDeath()
@@ -130,30 +112,12 @@ class Level1 extends Phaser.Scene {
     this.physics.add.collider(this.enemies, this.groundLayer);
     this.physics.add.collider(this.enemies, this.enemyStopBlocksLayer);
 
-    // Blubert companion — follows Jammy, scans for hidden zomberries
+    // Bullets vs ground — AudioWaves don't currently collide with ground, so skip
+
+    // Blubert companion
     this.blubert = new Blubert(this, this.jammy);
 
-    // Dev teleport portal — walk into it to warp straight to Stage 1-3
-    this.devPortal = this.physics.add.sprite(200, 168, "dev-portal", "portal1");
-    this.devPortal.body.setAllowGravity(false);
-    this.devPortal.body.setImmovable(true);
-    this.devPortal.setDepth(50);
-    this.devPortal.play("dev-portal-swirl");
-    this.add.bitmapText(this.devPortal.x - 24, this.devPortal.y - 22, "tempFont", "DEV->1-3", 8)
-      .setTintFill(0xffccff);
-    this._teleporting = false;
-    this.physics.add.overlap(this.jammy.sprite, this.devPortal, () => {
-      if (this._teleporting) return;
-      this._teleporting = true;
-      this.devPortal.destroy();
-      // Defer to next frame so we don't swap scenes mid-physics-step
-      this.time.delayedCall(10, () => {
-        this.scene.stop("Level1");
-        this.scene.start("Stage1_3");
-      });
-    });
-
-    // Sync UI weapon indicator with Jammy's starting weapon
+    // Sync UI weapon indicator
     const ui = this.scene.get("UIScene");
     if (ui && ui.setWeapon) ui.setWeapon(this.jammy.currentWeapon);
   }
@@ -162,26 +126,11 @@ class Level1 extends Phaser.Scene {
     this.jammy.update();
     if (this.blubert) this.blubert.update();
     this.enemies.getChildren().forEach((enemy) => {
-      if (enemy.update) {
-        enemy.update();
-      }
+      if (enemy.update) enemy.update();
     });
   }
 
   changeScene() {
-    this.scene.start("Level1BossFight");
-  }
-
-  getJammyQuadrant() {
-    const worldWidth = this.cameras.main.width;
-    const worldHeight = this.cameras.main.height;
-
-    if (this.jammy.x < worldWidth / 2 && this.jammy.y < worldHeight / 2)
-      return 1;
-    if (this.jammy.x > worldWidth / 2 && this.jammy.y < worldHeight / 2)
-      return 2;
-    if (this.jammy.x < worldWidth / 2 && this.jammy.y > worldHeight / 2)
-      return 3;
-    return 4;
+    this.scene.start("EndCredits");
   }
 }

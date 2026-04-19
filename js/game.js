@@ -4,7 +4,7 @@ window.addEventListener('DOMContentLoaded', function() {
         type: Phaser.AUTO,
         width: 426,
         height: 240,
-        scene: [Boot, Preload, TitleScreen, PauseScene, UIScene,CutScene1_1, CutScene1_2, CutScene1_3, Level1, Level1BossFight, CutSceneWatermelonDefeated, EndCredits],
+        scene: [Boot, Preload, TitleScreen, PauseScene, UIScene,CutScene1_1, CutScene1_2, CutScene1_3, Level1, Level1BossFight, CutSceneWatermelonDefeated, Stage1_3, EndCredits],
         physics: {
             default: 'arcade',
             arcade: {
@@ -25,8 +25,8 @@ window.addEventListener('DOMContentLoaded', function() {
         // Update to Phaser 3 compatible code if necessary
     };
 
-    // Add global map to track bread tokens collected per level
-    game.breadTokensCollected = {
+    // Track ANT tokens collected per level
+    game.antTokensCollected = {
         level1: 0
     };
 

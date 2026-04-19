@@ -1,0 +1,43 @@
+class AntToken extends Phaser.Physics.Arcade.Sprite {
+    constructor(scene, x, y) {
+        super(scene, x, y, "ant-token", "spin1");
+        this.score = 1000;
+        this.gameName = 'AntToken';
+
+        scene.add.existing(this);
+        this.scene.physics.add.existing(this);
+        this.body.setAllowGravity(false);
+        this.setDisplaySize(16, 16);
+        this.play("ant-token-spin");
+
+        scene.collectibles.add(this);
+    }
+
+    effect() {
+        scene.scene.get('UIScene').setScore(this.score);
+        scene.sound.play("antTokenCollectSound");
+        this.body.setEnable(false);
+        this.stop();
+
+        if (scene.jammy && typeof scene.jammy.antTokens === 'number') {
+            scene.jammy.antTokens += 1;
+        }
+        if (game.antTokensCollected) {
+            game.antTokensCollected.level1 = (game.antTokensCollected.level1 || 0) + 1;
+        }
+
+        this.setAlpha(1);
+        this.setDisplaySize(48, 48);
+        scene.tweens.add({
+            targets: this,
+            displayWidth: 0,
+            displayHeight: 0,
+            alpha: 0,
+            duration: 200,
+            ease: "Linear",
+            onComplete: () => {
+                this.destroy();
+            },
+        });
+    }
+}

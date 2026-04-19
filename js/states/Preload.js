@@ -64,6 +64,10 @@ class Preload extends Phaser.Scene {
       "level1BossFight",
       "assets/img/tilemaps/Level1BossFight.json"
     );
+    this.load.tilemapTiledJSON(
+      "stage1_3",
+      "assets/img/tilemaps/Stage1_3.json"
+    );
 
     // Load game objects and sprite atlases
     this.load.atlas(
@@ -80,7 +84,11 @@ class Preload extends Phaser.Scene {
       "assets/img/sprites/power-up/power-up.png",
       "assets/img/sprites/power-up/power-up.json"
     );
-    this.load.image("coin", "assets/img/sprites/coin.png");
+    this.load.atlas(
+      "ant-token",
+      "assets/img/sprites/ant-token/ant-token.png",
+      "assets/img/sprites/ant-token/ant-token.json"
+    );
     this.load.atlas(
       "raspberry",
       "assets/img/sprites/raspberry/raspberry.png",
@@ -90,6 +98,41 @@ class Preload extends Phaser.Scene {
       "blueberry",
       "assets/img/sprites/blueberry/blueberry.png",
       "assets/img/sprites/blueberry/blueberry.json"
+    );
+    this.load.atlas(
+      "blubert",
+      "assets/img/sprites/blubert/blubert.png",
+      "assets/img/sprites/blubert/blubert.json"
+    );
+    this.load.atlas(
+      "horned-fruit",
+      "assets/img/sprites/horned-fruit/horned-fruit.png",
+      "assets/img/sprites/horned-fruit/horned-fruit.json"
+    );
+    this.load.atlas(
+      "watermelon-snapper",
+      "assets/img/sprites/watermelon-snapper/watermelon-snapper.png",
+      "assets/img/sprites/watermelon-snapper/watermelon-snapper.json"
+    );
+    this.load.atlas(
+      "seed-of-destruction",
+      "assets/img/sprites/seed-of-destruction/seed-of-destruction.png",
+      "assets/img/sprites/seed-of-destruction/seed-of-destruction.json"
+    );
+    this.load.atlas(
+      "bush",
+      "assets/img/sprites/bush/bush.png",
+      "assets/img/sprites/bush/bush.json"
+    );
+    this.load.atlas(
+      "desert-cactus",
+      "assets/img/sprites/desert-cactus/desert-cactus.png",
+      "assets/img/sprites/desert-cactus/desert-cactus.json"
+    );
+    this.load.atlas(
+      "dev-portal",
+      "assets/img/sprites/dev-portal/dev-portal.png",
+      "assets/img/sprites/dev-portal/dev-portal.json"
     );
     this.load.image(
       "blueberry-bomb",
@@ -130,12 +173,12 @@ class Preload extends Phaser.Scene {
       "assets/img/sprites/lifebar/lifebar-guts.png"
     );
     this.load.image(
-      "bread-token-hud",
-      "assets/img/sprites/bread-token/hud/bread-token-hud.png"
+      "ant-token-hud",
+      "assets/img/sprites/ant-token/hud/ant-token-hud.png"
     );
     this.load.image(
-      "bread-token-outline-hud",
-      "assets/img/sprites/bread-token/hud/bread-token-outline-hud.png"
+      "ant-token-outline-hud",
+      "assets/img/sprites/ant-token/hud/ant-token-outline-hud.png"
     );
     this.load.image(
       "bossLifebar-outline",
@@ -214,7 +257,7 @@ class Preload extends Phaser.Scene {
     );
     this.load.audio("powerUpSound", "assets/audio/sfx/custom/healthUp.mp3");
     this.load.audio(
-      "breadTokenCollectSound",
+      "antTokenCollectSound",
       "assets/audio/sfx/custom/collectBreadToken.mp3"
     );
     this.load.audio(
@@ -396,11 +439,29 @@ class Preload extends Phaser.Scene {
       repeat: 3,
     });
 
+    scene.anims.create({
+      key: "ant-token-spin",
+      frames: [
+        { key: "ant-token", frame: "spin1" },
+        { key: "ant-token", frame: "spin2" },
+        { key: "ant-token", frame: "spin3" },
+        { key: "ant-token", frame: "spin4" },
+      ],
+      frameRate: 4,
+      repeat: -1,
+    });
+    scene.anims.create({
+      key: "dev-portal-swirl",
+      frames: scene.anims.generateFrameNames("dev-portal", { prefix: "portal", start: 1, end: 4 }),
+      frameRate: 6,
+      repeat: -1,
+    });
+
     let pipeline = new ElectricPipeline(this.game);
     this.renderer.pipelines.add('Electric', pipeline);
     let pipeline2 = new ElectricPipeline2(this.game);
     this.renderer.pipelines.add('Electric2', pipeline2);
-    
+
     this.scene.start("TitleScreen");
   }
 }
