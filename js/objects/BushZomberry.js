@@ -10,9 +10,6 @@ class BushZomberry extends Raspberry {
     this.body.setEnable(false);
     this.body.setAllowGravity(false);
 
-    this.bushSprite = scn.add.sprite(x, y + 4, "bush", "empty1");
-    this.bushSprite.setDepth(50);
-
     if (!scn.anims.exists("bush-empty")) {
       scn.anims.create({
         key: "bush-empty",
@@ -31,7 +28,30 @@ class BushZomberry extends Raspberry {
         frameRate: 5, repeat: -1,
       });
     }
+
+    // Tilemap createFromObjects calls `new BushZomberry(scene)` then
+    // .setPosition(x, y), so defer bushSprite creation to the position
+    // setter — at construction time x/y are undefined.
+    if (typeof x === "number" && typeof y === "number") {
+      this._createBushSprite(x, y);
+    }
+  }
+
+  _createBushSprite(x, y) {
+    if (this.bushSprite) return;
+    this.bushSprite = this.scene.add.sprite(x, y + 4, "bush", "empty1");
+    this.bushSprite.setDepth(50);
     this.bushSprite.play("bush-empty");
+  }
+
+  setPosition(x, y, z, w) {
+    super.setPosition(x, y, z, w);
+    if (!this.bushSprite && typeof x === "number" && typeof y === "number") {
+      this._createBushSprite(x, y);
+    } else if (this.bushSprite && typeof x === "number" && typeof y === "number") {
+      this.bushSprite.setPosition(x, y + 4);
+    }
+    return this;
   }
 
   detect() {

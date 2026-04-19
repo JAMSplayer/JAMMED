@@ -10,7 +10,8 @@ class Stage1_3 extends Phaser.Scene {
   create() {
     this.sound.stopAll();
     this.sound.play("Level1MusicLoop", { loop: true });
-    this.cameras.main.setBackgroundColor("#2a184a");
+    // Pink sunset sky — camera background
+    this.cameras.main.setBackgroundColor("#f5a8b8");
 
     this.map = this.make.tilemap({
       key: "stage1_3",
@@ -24,6 +25,25 @@ class Stage1_3 extends Phaser.Scene {
     this.enemyStopBlocksLayer = this.map.createLayer("EnemyStopBlocks", tileset);
     this.deathBlocksLayer = this.map.createLayer("DeathBlocksLayer", tileset);
     this.sceneChangeLayer = this.map.createLayer("SceneChangeLayer", tileset);
+
+    // Horizon sun — fixed parallax behind everything
+    this.sun = this.add.circle(320, 88, 28, 0xfff0a8);
+    this.sun.setScrollFactor(0.2);
+    this.sun.setDepth(-10);
+
+    // Blue brick ground — solid bar along the invisible-floor row
+    // Floor is at tile row 11 (y=176). Paint a brick-blue block from y=176 down.
+    this.groundVisual = this.add.rectangle(
+      this.map.widthInPixels / 2, 216,
+      this.map.widthInPixels, 80,
+      0x3a5a8c
+    );
+    this.groundVisual.setDepth(1);
+    // Subtle brick seam every 32px for texture
+    for (let bx = 0; bx < this.map.widthInPixels; bx += 32) {
+      const seam = this.add.rectangle(bx, 216, 1, 80, 0x2a416a);
+      seam.setDepth(2);
+    }
 
     this.enemyStopBlocksLayer.setAlpha(0);
     this.deathBlocksLayer.setAlpha(0);
@@ -79,7 +99,7 @@ class Stage1_3 extends Phaser.Scene {
         this.jammyData.facing
       );
     } else {
-      this.jammy = new Jammy(120, 100);
+      this.jammy = new Jammy(60, 100);
     }
     this.jammy.sprite.setDepth(100);
     this.jammy.controlsEnabled = true;

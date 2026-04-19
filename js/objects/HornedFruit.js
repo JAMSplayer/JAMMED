@@ -11,7 +11,7 @@ class HornedFruit extends Phaser.Physics.Arcade.Sprite {
     this.hp = 2;
     this.dead = false;
     this.dropped = false;
-    this.baseY = y;
+    this.baseY = typeof y === "number" ? y : 0;
     this.detectHorizRange = 14;
     this.detectVertRange = 140;
 
@@ -24,6 +24,12 @@ class HornedFruit extends Phaser.Physics.Arcade.Sprite {
     }
     this.play("hornedfruit-idle");
     scn.enemies.add(this);
+  }
+
+  setPosition(x, y, z, w) {
+    super.setPosition(x, y, z, w);
+    if (typeof y === "number" && !this.dropped) this.baseY = y;
+    return this;
   }
 
   update() {
