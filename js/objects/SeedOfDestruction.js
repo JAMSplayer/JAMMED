@@ -6,25 +6,15 @@ class SeedOfDestruction extends Phaser.Physics.Arcade.Sprite {
     scn.physics.add.existing(this);
 
     this.body.setAllowGravity(true);
-    this.body.setSize(12, 8, 2, 1);
+    this.body.setSize(8, 6, 2, 1);
     this.body.setBounce(0.2);
 
     this.damage = 3;
-    this.blastRadius = 56;
-    this.selfDamageRadius = 34;
-    this.fuseMs = 2200;
+    this.blastRadius = 52;
+    this.selfDamageRadius = 32;
+    this.fuseMs = 1800;
     this.exploded = false;
 
-    // Arc launch — direction -1 (left) / 1 (right); aimUp lobs higher and closer.
-    // Horizontal speed stays well above Jammy's 125px/s walk so even
-    // running forward he can't catch up to his own throw.
-    const dir = direction === "left" ? -1 : 1;
-    const speedX = (aimUp ? 230 : 420) * dir;
-    const speedY = aimUp ? -540 : -400;
-    this.body.setVelocityX(speedX);
-    this.body.setVelocityY(speedY);
-
-    // Fat end points the direction of travel
     this.setOrigin(0.5, 0.5);
 
     this.fuseTimer = scn.time.delayedCall(this.fuseMs, () => this.explode());
@@ -43,10 +33,7 @@ class SeedOfDestruction extends Phaser.Physics.Arcade.Sprite {
       this.enemyOverlap = scn.physics.add.overlap(this, scn.enemies, () => this.explode());
     }
 
-    // If we spawned already overlapping an enemy (point-blank shot),
-    // detonate immediately on the next tick — damaging Jammy and
-    // stunning Blubert in the process because the seed is still
-    // inside the self-damage radius.
+    // Point-blank detonation — if spawned on top of an enemy, next-tick boom.
     if (scn.enemies) {
       const pbEnemy = scn.enemies.getChildren().find(e =>
         e && !e.dead &&
@@ -57,39 +44,40 @@ class SeedOfDestruction extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
-    if (!scn.seedsOfDestruction) {
-      scn.seedsOfDestruction = scn.physics.add.group();
-    }
-    scn.seedsOfDestruction.add(this);
+    // Arc launch — LAST so nothing else clobbers the velocity.
+    // Shorter range: ~260-300px to ground so a player who stopped
+    // after seeing eyes appear can still clear the bush ahead.
+    const dir = direction === "left" ? -1 : 1;
+    const speedX = (aimUp ? 160 : 300) * dir;
+    const speedY = aimUp ? -440 : -340;
+    this.body.setVelocityX(speedX);
+    this.body.setVelocityY(speedY);
   }
 
   static ensureTexture(scene) {
     if (scene.textures.exists("seed-teardrop")) return;
-    // 18x10 tan tear-drop with the fat end on the right.
-    // Rotation at render time aims the fat end toward travel direction.
+    // 14x8 tan tear-drop — compact, fat end on the right.
     const g = scene.make.graphics({ x: 0, y: 0, add: false });
-    g.fillStyle(0xd4a676, 1);        // tan body
-    g.fillEllipse(12, 5, 12, 10);    // fat end
-    g.fillTriangle(12, 0, 12, 10, 0, 5); // tapered point
-    g.lineStyle(1, 0x7e5a34, 1);     // darker outline
-    g.strokeEllipse(12, 5, 12, 10);
+    g.fillStyle(0xd4a676, 1);
+    g.fillEllipse(10, 4, 8, 7);
+    g.fillTriangle(10, 1, 10, 7, 0, 4);
+    g.lineStyle(1, 0x7e5a34, 1);
+    g.strokeEllipse(10, 4, 8, 7);
     g.beginPath();
-    g.moveTo(12, 0);
-    g.lineTo(0, 5);
-    g.lineTo(12, 10);
+    g.moveTo(10, 1);
+    g.lineTo(0, 4);
+    g.lineTo(10, 7);
     g.closePath();
     g.strokePath();
-    // Tiny highlight for form
     g.fillStyle(0xf0c899, 1);
-    g.fillEllipse(13, 3, 4, 2);
-    g.generateTexture("seed-teardrop", 18, 10);
+    g.fillEllipse(11, 3, 3, 1.5);
+    g.generateTexture("seed-teardrop", 14, 8);
     g.destroy();
   }
 
   preUpdate(time, delta) {
     super.preUpdate(time, delta);
     if (this.exploded || !this.body) return;
-    // Rotate so the fat end always leads the velocity vector.
     const vx = this.body.velocity.x;
     const vy = this.body.velocity.y;
     if (vx !== 0 || vy !== 0) {
@@ -130,38 +118,57 @@ class SeedOfDestruction extends Phaser.Physics.Arcade.Sprite {
       if (db <= this.selfDamageRadius) blu.stun();
     }
 
-    // Visual: expanding shockwave ring + yellow flash + enemy-death burst
-    const ring = this.scene.add.circle(this.x, this.y, this.blastRadius, 0xffee88, 0.35);
-    ring.setStrokeStyle(3, 0xffffff, 1);
-    ring.setScale(0.15);
-    ring.setDepth(90);
-    this.scene.tweens.add({
-      targets: ring,
-      scale: 1.2,
-      alpha: 0,
-      duration: 320,
-      ease: "Cubic.easeOut",
-      onComplete: () => ring.destroy(),
-    });
-    const flash = this.scene.add.circle(this.x, this.y, 18, 0xffffff, 0.8);
-    flash.setDepth(91);
-    this.scene.tweens.add({
-      targets: flash,
-      scale: 2.2,
-      alpha: 0,
-      duration: 180,
-      ease: "Quad.easeOut",
-      onComplete: () => flash.destroy(),
-    });
-    if (this.scene.anims.exists("enemy-death")) {
-      const blast = this.scene.add.sprite(this.x, this.y, "enemy-death");
-      blast.setScale(2.6);
-      blast.setDepth(92);
-      blast.play("enemy-death");
-      blast.once("animationcomplete", () => blast.destroy());
-    }
-    this.scene.cameras.main.shake(120, 0.004);
+    this._spawnFieryBlast(this.x, this.y);
+    this.scene.cameras.main.shake(130, 0.005);
     this.scene.sound.play("enemyDeathSound");
     this.destroy();
+  }
+
+  _spawnFieryBlast(x, y) {
+    const scn = this.scene;
+    // Orange expanding shockwave ring
+    const ring = scn.add.circle(x, y, this.blastRadius, 0xff7a22, 0.45);
+    ring.setStrokeStyle(3, 0xffd066, 1);
+    ring.setScale(0.15);
+    ring.setDepth(90);
+    scn.tweens.add({
+      targets: ring, scale: 1.1, alpha: 0,
+      duration: 340, ease: "Cubic.easeOut",
+      onComplete: () => ring.destroy(),
+    });
+    // Bright red-orange core flash
+    const core = scn.add.circle(x, y, 14, 0xffcc44, 0.9);
+    core.setDepth(92);
+    scn.tweens.add({
+      targets: core, scale: 2.6, alpha: 0,
+      duration: 220, ease: "Quad.easeOut",
+      onComplete: () => core.destroy(),
+    });
+    // A few fire sparks flying outward
+    const sparkColors = [0xff3322, 0xff6611, 0xffaa33, 0xffee66];
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2 + Math.random() * 0.3;
+      const dist = 20 + Math.random() * this.blastRadius * 0.7;
+      const spark = scn.add.circle(x, y, 2 + Math.random() * 2,
+        sparkColors[i % sparkColors.length], 1);
+      spark.setDepth(93);
+      scn.tweens.add({
+        targets: spark,
+        x: x + Math.cos(angle) * dist,
+        y: y + Math.sin(angle) * dist - 6,
+        alpha: 0, scale: 0.3,
+        duration: 280 + Math.random() * 140,
+        ease: "Cubic.easeOut",
+        onComplete: () => spark.destroy(),
+      });
+    }
+    // Dark smoke puff lingering
+    const smoke = scn.add.circle(x, y - 4, 10, 0x222222, 0.55);
+    smoke.setDepth(91);
+    scn.tweens.add({
+      targets: smoke, y: y - 22, scale: 2.2, alpha: 0,
+      duration: 520, ease: "Sine.easeOut",
+      onComplete: () => smoke.destroy(),
+    });
   }
 }
