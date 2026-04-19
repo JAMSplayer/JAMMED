@@ -368,14 +368,31 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
     const anim = this.facing === "right" ? "shooting-right" : "shooting-left";
     this.shootingPoseActive = true;
     this.sprite.play(anim, true);
-    // Tilt the whole body ~28deg when aiming up — no dedicated up-aim
-    // frame in the atlas, so we rotate the horizontal shooting pose.
-    const tilt = this.up ? (this.facing === "right" ? -0.5 : 0.5) : 0;
-    this.sprite.setRotation(tilt);
+    // Aim-up tilt: pivot around the feet so they stay planted while
+    // the torso rotates back. Origin change shifts the sprite so we
+    // keep track of the offset and undo it when the pose ends.
+    let tilt = 0;
+    let yOffset = 0;
+    if (this.up) {
+      tilt = this.facing === "right" ? -0.45 : 0.45;
+      const fh = this.sprite.frame.height || 32;
+      yOffset = fh * 0.5;
+      this.sprite.setOrigin(0.5, 1);
+      this.sprite.y += yOffset;
+      this.sprite.setRotation(tilt);
+    } else {
+      this.sprite.setRotation(0);
+    }
+    this._shootPoseYOffset = yOffset;
     if (this._shootPoseTimer) this._shootPoseTimer.remove(false);
     this._shootPoseTimer = scene.time.delayedCall(320, () => {
       this.shootingPoseActive = false;
       this.sprite.setRotation(0);
+      if (this._shootPoseYOffset) {
+        this.sprite.y -= this._shootPoseYOffset;
+        this.sprite.setOrigin(0.5, 0.5);
+        this._shootPoseYOffset = 0;
+      }
       if (!this.alive) return;
       if (
         !this.walkingLeft &&
@@ -458,6 +475,11 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
   rest() {
     if (this.alive) {
       this.sprite.setRotation(0);
+      if (this._shootPoseYOffset) {
+        this.sprite.y -= this._shootPoseYOffset;
+        this.sprite.setOrigin(0.5, 0.5);
+        this._shootPoseYOffset = 0;
+      }
       if (!this.leftIsDown && !this.rightIsDown) {
         this.sprite.body.velocity.x = 0;
       }
