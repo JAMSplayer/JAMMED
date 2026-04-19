@@ -184,6 +184,9 @@ class Stage1_3 extends Phaser.Scene {
 
     // Blubert companion
     this.blubert = new Blubert(this, this.jammy);
+    // One revive per stage — the next pickup Jammy grabs after
+    // Blubert is disposed brings him back.
+    this.blubertRevivesLeft = 1;
 
     // Sync UI weapon indicator
     const ui = this.scene.get("UIScene");
@@ -197,6 +200,22 @@ class Stage1_3 extends Phaser.Scene {
       if (enemy.update) enemy.update();
     });
     if (this.hornedRigs) this.hornedRigs.forEach(r => r.update());
+  }
+
+  tryReviveBlubert() {
+    if (this.blubert || !this.jammy || (this.blubertRevivesLeft || 0) <= 0) return;
+    this.blubertRevivesLeft -= 1;
+    this.blubert = new Blubert(this, this.jammy);
+    // Small pop-in so the revive reads
+    if (this.blubert.sprite) {
+      this.blubert.sprite.setScale(0.2);
+      this.blubert.sprite.setAlpha(0.2);
+      this.tweens.add({
+        targets: this.blubert.sprite,
+        scaleX: 1, scaleY: 1, alpha: 1,
+        duration: 260, ease: "Back.easeOut",
+      });
+    }
   }
 
   _buildHornedRig(hf, index) {

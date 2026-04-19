@@ -56,6 +56,7 @@ class SeedAmmoPickup extends Phaser.Physics.Arcade.Sprite {
     if (scene.sound && scene.cache.audio.exists("powerUpSound")) {
       scene.sound.play("powerUpSound", { volume: 0.6, rate: 1.2 });
     }
+    if (typeof scene.tryReviveBlubert === "function") scene.tryReviveBlubert();
     if (this.glowRing) { this.glowRing.destroy(); this.glowRing = null; }
     this.destroy();
   }

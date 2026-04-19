@@ -54,41 +54,22 @@ class SeedOfDestruction extends Phaser.Physics.Arcade.Sprite {
     this.body.setVelocityY(speedY);
   }
 
-  // Whistle-plunge fire sfx. Uses already-loaded audio (laserSound
-  // pitched up for whistle + shortExplosion for plunge) so it works
-  // whether or not Phaser's WebAudio context has been unlocked, and
-  // layers on a synthesized whistle sweep on top when available.
+  // Whistle-plunge fire sfx from already-loaded samples — works even
+  // when Phaser's WebAudio context is suspended (samples route
+  // through the sound manager, which queues until first user gesture).
   static playFireSound(scene) {
     const snd = scene.sound;
-    if (!snd) return;
-    // Sample-based layer: whistle then thump (robust, no ctx dependency)
+    if (!snd || !scene.cache || !scene.cache.audio) return;
     if (scene.cache.audio.exists("laserSound")) {
-      snd.play("laserSound", { volume: 0.6, rate: 1.9, detune: 200 });
+      snd.play("laserSound", { volume: 1.0, rate: 1.7 });
     }
     if (scene.cache.audio.exists("shortExplosion")) {
-      scene.time.delayedCall(130, () => {
-        if (scene.cache.audio.exists("shortExplosion")) {
-          snd.play("shortExplosion", { volume: 0.55, rate: 0.75 });
+      scene.time.delayedCall(150, () => {
+        if (scene.cache && scene.cache.audio.exists("shortExplosion")) {
+          snd.play("shortExplosion", { volume: 0.9, rate: 0.7 });
         }
       });
     }
-    // WebAudio layer: adds a sine sweep for an extra "whoosh" when the
-    // context is running. No-ops silently when suspended/locked.
-    const ctx = snd.context;
-    if (!ctx || typeof ctx.createOscillator !== "function") return;
-    if (ctx.state !== "running") return;
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const g = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(1500, now);
-    osc.frequency.exponentialRampToValueAtTime(400, now + 0.2);
-    g.gain.setValueAtTime(0.0001, now);
-    g.gain.linearRampToValueAtTime(0.35, now + 0.015);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
-    osc.connect(g).connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.24);
   }
 
   static ensureTexture(scene) {
