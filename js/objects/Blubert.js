@@ -227,6 +227,10 @@ class Blubert {
     this.trackedEnemy = null;
     if (this.scanTimer) this.scanTimer.destroy();
     if (this.reticle) { this.reticle.destroy(); this.reticle = null; }
+    // Clear the scene reference immediately — the fade-out takes
+    // 600ms and a pickup grabbed during that window should trigger
+    // a revive rather than being blocked by the still-on-screen ghost.
+    if (this.scene && this.scene.blubert === this) this.scene.blubert = null;
     if (!this.sprite) return;
     // Tumble-and-fade farewell
     this.scene.tweens.add({
@@ -239,7 +243,6 @@ class Blubert {
       onComplete: () => {
         if (this.sprite) this.sprite.destroy();
         this.sprite = null;
-        if (this.scene && this.scene.blubert === this) this.scene.blubert = null;
       },
     });
   }
