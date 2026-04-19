@@ -54,41 +54,41 @@ class SeedOfDestruction extends Phaser.Physics.Arcade.Sprite {
     this.body.setVelocityY(speedY);
   }
 
-  // WebAudio-synthesized whistle-into-plunge fire sfx. Uses Phaser's
-  // shared AudioContext so it blends with the other scene sounds.
+  // Whistle-plunge fire sfx. Uses already-loaded audio (laserSound
+  // pitched up for whistle + shortExplosion for plunge) so it works
+  // whether or not Phaser's WebAudio context has been unlocked, and
+  // layers on a synthesized whistle sweep on top when available.
   static playFireSound(scene) {
-    const ctx = scene.sound && scene.sound.context;
+    const snd = scene.sound;
+    if (!snd) return;
+    // Sample-based layer: whistle then thump (robust, no ctx dependency)
+    if (scene.cache.audio.exists("laserSound")) {
+      snd.play("laserSound", { volume: 0.6, rate: 1.9, detune: 200 });
+    }
+    if (scene.cache.audio.exists("shortExplosion")) {
+      scene.time.delayedCall(130, () => {
+        if (scene.cache.audio.exists("shortExplosion")) {
+          snd.play("shortExplosion", { volume: 0.55, rate: 0.75 });
+        }
+      });
+    }
+    // WebAudio layer: adds a sine sweep for an extra "whoosh" when the
+    // context is running. No-ops silently when suspended/locked.
+    const ctx = snd.context;
     if (!ctx || typeof ctx.createOscillator !== "function") return;
+    if (ctx.state !== "running") return;
     const now = ctx.currentTime;
-    const master = ctx.createGain();
-    master.gain.setValueAtTime(0.5, now);
-    master.connect(ctx.destination);
-
-    // Whistle — high sine sweeping down ~1400Hz -> 480Hz
-    const whistle = ctx.createOscillator();
-    const wg = ctx.createGain();
-    whistle.type = "sine";
-    whistle.frequency.setValueAtTime(1400, now);
-    whistle.frequency.exponentialRampToValueAtTime(480, now + 0.18);
-    wg.gain.setValueAtTime(0.0001, now);
-    wg.gain.linearRampToValueAtTime(0.35, now + 0.015);
-    wg.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
-    whistle.connect(wg).connect(master);
-    whistle.start(now);
-    whistle.stop(now + 0.22);
-
-    // Plunge — square-wave thump, delayed, sweeps 110Hz -> 45Hz
-    const thump = ctx.createOscillator();
-    const tg = ctx.createGain();
-    thump.type = "square";
-    thump.frequency.setValueAtTime(110, now + 0.15);
-    thump.frequency.exponentialRampToValueAtTime(45, now + 0.36);
-    tg.gain.setValueAtTime(0.0001, now + 0.14);
-    tg.gain.linearRampToValueAtTime(0.28, now + 0.18);
-    tg.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
-    thump.connect(tg).connect(master);
-    thump.start(now + 0.14);
-    thump.stop(now + 0.44);
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(1500, now);
+    osc.frequency.exponentialRampToValueAtTime(400, now + 0.2);
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.linearRampToValueAtTime(0.35, now + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    osc.connect(g).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.24);
   }
 
   static ensureTexture(scene) {
