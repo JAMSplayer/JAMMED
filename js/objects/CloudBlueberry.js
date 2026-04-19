@@ -33,7 +33,16 @@ class CloudBlueberry extends Blueberry {
   update() {
     if (this.dead) return;
     const j = this.scene.jammy;
-    if (!j || !j.alive) return;
+    if (!j || !j.alive) {
+      // Jammy is dead/gone — halt any active dive/return tween and
+      // stop motion so we don't drift off or collide after death.
+      if (this._diveTween) { this._diveTween.remove(); this._diveTween = null; }
+      if (this._returnTween) { this._returnTween.remove(); this._returnTween = null; }
+      if (this.body) this.body.setVelocity(0, 0);
+      this.diving = false;
+      this.returning = false;
+      return;
+    }
 
     if (this.hidden) {
       // Emerge once Jammy is close underneath
@@ -93,18 +102,33 @@ class CloudBlueberry extends Blueberry {
   diveBomb() {
     this.diving = true;
     const j = this.scene.jammy;
+    const startX = this.x;
+    const startY = this.y;
     const targetX = j.sprite.x;
     const targetY = j.sprite.y - 8;
-    // Face the dive direction
+
+    // Quadratic Bezier control point: well above and slightly past the
+    // start so the drone rises into a hawk-like arc before plunging
+    // steeply onto Jammy.
+    const midX = (startX + targetX) / 2;
+    const midY = Math.min(startY, targetY) - 62;
+
     this.facing = targetX < this.x ? -1 : 1;
     this.play(this.facing === 1 ? "oscillating-right" : "oscillating-left", true);
     this.body.setAllowGravity(false);
-    this.scene.tweens.add({
-      targets: this,
-      x: targetX,
-      y: targetY,
-      duration: 450,
-      ease: "Cubic.easeIn",
+
+    const t = { v: 0 };
+    this._diveTween = this.scene.tweens.add({
+      targets: t,
+      v: 1,
+      duration: 620,
+      ease: "Quad.easeIn",
+      onUpdate: () => {
+        if (!this.active || this.dead) return;
+        const u = 1 - t.v;
+        this.x = u*u*startX + 2*u*t.v*midX + t.v*t.v*targetX;
+        this.y = u*u*startY + 2*u*t.v*midY + t.v*t.v*targetY;
+      },
       onComplete: () => this._diveImpact(),
     });
   }
@@ -119,13 +143,13 @@ class CloudBlueberry extends Blueberry {
     }
     this.diving = false;
     this.returning = true;
-    this.scene.tweens.add({
+    this._returnTween = this.scene.tweens.add({
       targets: this,
       x: this.homeX,
       y: this.homeY + 18,
       duration: 500,
       ease: "Sine.easeOut",
-      onComplete: () => { this.returning = false; },
+      onComplete: () => { this.returning = false; this._returnTween = null; },
     });
   }
 

@@ -13,16 +13,16 @@ class SeedAmmoPickup extends Phaser.Physics.Arcade.Sprite {
     scn.add.existing(this);
     scn.physics.add.existing(this);
     this.body.setAllowGravity(false);
-    this.setScale(2);
+    this.setScale(1.15);
     this.setRotation(-0.2);
     this.setTint(0xffd188);
 
     scn.collectibles.add(this);
 
-    // Pulse so it stands out against the sky
+    // Subtle pulse so it reads as a pickup without dominating the screen
     scn.tweens.add({
       targets: this,
-      scale: 2.3,
+      scale: 1.35,
       duration: 560,
       yoyo: true,
       repeat: -1,
