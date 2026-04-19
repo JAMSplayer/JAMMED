@@ -58,6 +58,12 @@ class Blubert {
     }
     this.sprite.play("blubert-idle-right");
 
+    // Aim-assist reticle — subtle crosshair drawn on tracked enemy so
+    // Jammy knows exactly what Blubert is locked onto.
+    this.reticle = scn.add.graphics();
+    this.reticle.setDepth(70);
+    this.reticle.setVisible(false);
+
     this.scanTimer = scn.time.addEvent({
       delay: this.scanInterval,
       callback: () => this.scan(),
@@ -110,6 +116,23 @@ class Blubert {
       : this.followSpeed;
     this.sprite.x += (targetX - this.sprite.x) * speed;
     this.sprite.y += (targetY - this.sprite.y) * speed;
+
+    // Reticle — draw on the tracked enemy, clear when idle
+    if (this.reticle) {
+      this.reticle.clear();
+      if (this.trackedEnemy && this.trackedEnemy.active && !this.trackedEnemy.dead) {
+        const e = this.trackedEnemy;
+        this.reticle.lineStyle(1, 0xff7070, 0.85);
+        this.reticle.strokeCircle(e.x, e.y, 10);
+        this.reticle.lineBetween(e.x - 14, e.y, e.x - 5, e.y);
+        this.reticle.lineBetween(e.x + 5,  e.y, e.x + 14, e.y);
+        this.reticle.lineBetween(e.x, e.y - 14, e.x, e.y - 5);
+        this.reticle.lineBetween(e.x, e.y + 5,  e.x, e.y + 14);
+        this.reticle.setVisible(true);
+      } else {
+        this.reticle.setVisible(false);
+      }
+    }
 
     if (this.stunned) {
       this.sprite.play("blubert-stunned", true);
@@ -189,6 +212,7 @@ class Blubert {
     this.dead = true;
     this.trackedEnemy = null;
     if (this.scanTimer) this.scanTimer.destroy();
+    if (this.reticle) { this.reticle.destroy(); this.reticle = null; }
     if (!this.sprite) return;
     // Tumble-and-fade farewell
     this.scene.tweens.add({

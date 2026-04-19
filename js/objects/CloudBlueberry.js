@@ -8,6 +8,7 @@ class CloudBlueberry extends Blueberry {
     this.body.setAllowGravity(false);
 
     this.hidden = true;
+    this.detected = false;
     this.setVisible(false);
     this.body.setEnable(false);
 
@@ -111,7 +112,7 @@ class CloudBlueberry extends Blueberry {
           this.lastAction = now;
           this.nextAction = "drop";
         }
-      } else if (hoverMs >= 2000) {
+      } else if (hoverMs >= 1000) {
         this.dropBomb();
         this.lastAction = now;
         this.nextAction = "dive";
@@ -120,11 +121,18 @@ class CloudBlueberry extends Blueberry {
     }
   }
 
+  detect() {
+    if (this.detected || !this.hidden || this.dead) return;
+    this.detected = true;
+    if (this.cloud) this.cloud.setEyesVisible(true);
+  }
+
   emerge() {
     this.hidden = false;
     this.setVisible(true);
     this.body.setEnable(true);
     this.lastAction = this.scene.time.now;
+    if (this.cloud) this.cloud.setEyesVisible(false);
     // Pop out of the cloud with a small down-tween for flavor
     this.setScale(0.4);
     this.scene.tweens.add({
