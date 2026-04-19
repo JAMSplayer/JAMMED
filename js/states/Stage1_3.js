@@ -149,6 +149,23 @@ class Stage1_3 extends Phaser.Scene {
       new Bush(this, 2280, 176),
     ];
 
+    // Sky clouds — some pure decoys, some hiding blueberry drones that
+    // emerge and alternate between bomb-drops and dive-bombs.
+    this.decoyClouds = [
+      new Cloud(this, 320, 56),
+      new Cloud(this, 900, 48),
+      new Cloud(this, 1480, 60),
+      new Cloud(this, 2000, 52),
+      new Cloud(this, 2380, 58),
+    ];
+    // Blueberry-bearing clouds — these create their own cover cloud
+    this.cloudBlueberries = [
+      new CloudBlueberry(this, 760, 56),
+      new CloudBlueberry(this, 1640, 52),
+      new CloudBlueberry(this, 2240, 58),
+    ];
+    this.cloudBlueberries.forEach(b => this.enemies.add(b));
+
     // Hanging thorn-fruit rigs — moving platform + prickly vine + fruit.
     // Built on top of the spawned HornedFruit instances; the platform
     // tweens vertically and the fruit + vine follow until dropped.

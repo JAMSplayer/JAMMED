@@ -14,6 +14,8 @@ class Blubert {
 
     this.stunned = false;
     this.stunDuration = 3000;
+    this.hp = 3;
+    this.dead = false;
 
     this.trackedEnemy = null;
 
@@ -67,6 +69,7 @@ class Blubert {
   }
 
   update() {
+    if (this.dead || !this.sprite) return;
     if (!this.jammy || !this.jammy.alive) return;
 
     // Drop a tracked enemy that has scrolled off the visible screen.
@@ -158,8 +161,9 @@ class Blubert {
   }
 
   takeSympathyDamage() {
-    if (!this.sprite || !this.sprite.active) return;
-    // Red flash + small knockback bob — shows Blubert shares the hit.
+    if (this.dead || !this.sprite || !this.sprite.active) return;
+    this.hp -= 1;
+    // Red flash + small knockback bob
     this.sprite.setTint(0xff5555);
     this.scene.time.delayedCall(180, () => {
       if (this.sprite && this.sprite.active) this.sprite.clearTint();
@@ -172,6 +176,29 @@ class Blubert {
       yoyo: true,
       duration: 120,
       ease: "Sine.easeOut",
+    });
+    if (this.hp <= 0) this.dispose();
+  }
+
+  dispose() {
+    if (this.dead) return;
+    this.dead = true;
+    this.trackedEnemy = null;
+    if (this.scanTimer) this.scanTimer.destroy();
+    if (!this.sprite) return;
+    // Tumble-and-fade farewell
+    this.scene.tweens.add({
+      targets: this.sprite,
+      alpha: 0,
+      rotation: 2.5,
+      y: this.sprite.y + 20,
+      duration: 600,
+      ease: "Cubic.easeIn",
+      onComplete: () => {
+        if (this.sprite) this.sprite.destroy();
+        this.sprite = null;
+        if (this.scene && this.scene.blubert === this) this.scene.blubert = null;
+      },
     });
   }
 }
