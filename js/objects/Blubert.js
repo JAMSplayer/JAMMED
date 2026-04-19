@@ -3,12 +3,14 @@ class Blubert {
     this.scene = scn;
     this.jammy = jammy;
 
-    this.offsetX = 16;
-    this.offsetY = -26;
-    this.followSpeed = 0.15;
+    // Blubert flies ahead-and-above Jammy so his scan reaches hidden
+    // enemies before Jammy does, giving time to shoot the bushes out.
+    this.offsetX = 140;
+    this.offsetY = -44;
+    this.followSpeed = 0.2;
 
-    this.scanRange = 250;
-    this.scanInterval = 2500;
+    this.scanRange = 320;
+    this.scanInterval = 750;
 
     this.stunned = false;
     this.stunDuration = 3000;

@@ -11,7 +11,7 @@ class BushZomberry extends Raspberry {
     this.body.setAllowGravity(false);
 
     this.bushSprite = scn.add.sprite(x, y + 4, "bush", "empty1");
-    this.bushSprite.setDepth(this.depth + 1);
+    this.bushSprite.setDepth(50);
 
     if (!scn.anims.exists("bush-empty")) {
       scn.anims.create({
