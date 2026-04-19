@@ -68,15 +68,19 @@ class CloudBlueberry extends Blueberry {
     this.facing = j.sprite.x < this.x ? -1 : 1;
     this.play(this.facing === 1 ? "oscillating-right" : "oscillating-left", true);
 
-    // Alternate attacks on a simple cooldown
+    // Alternate attacks on a simple cooldown. Drop is additionally
+    // gated on being (almost) directly above Jammy so the bomb has a
+    // real chance of landing — otherwise we just wait for the drone
+    // to drift overhead before committing to the drop.
     const now = this.scene.time.now;
     if (now - this.lastAction >= (this.nextAction === "dive" ? this.diveCooldownMs : this.dropCooldownMs)) {
-      this.lastAction = now;
       if (this.nextAction === "dive") {
         this.diveBomb();
+        this.lastAction = now;
         this.nextAction = "drop";
-      } else {
+      } else if (Math.abs(this.x - j.sprite.x) <= 24) {
         this.dropBomb();
+        this.lastAction = now;
         this.nextAction = "dive";
       }
     }
@@ -113,16 +117,20 @@ class CloudBlueberry extends Blueberry {
     const startX = this.x;
     const startY = this.y;
 
-    // Lateral sweep: drone comes in from its current side, dips down
-    // through Jammy's altitude at the midpoint, and exits on the
-    // opposite side at the starting altitude. Gives the player a
-    // clear intercept window to shoot it mid-flight.
-    const side = this.x < j.sprite.x ? -1 : 1;
-    const horizReach = Math.max(120, Math.abs(this.x - j.sprite.x));
+    // Lateral sweep with a wide horizontal reach so the arc doesn't
+    // come straight down from overhead. Drone flies in on its
+    // current side, dips past Jammy at roughly his body center, and
+    // exits well beyond the opposite side — giving the player a long
+    // clear line to intercept with a seed.
+    let side = this.x < j.sprite.x ? -1 : 1;
+    // If drone was hovering near-directly above Jammy, pick a side
+    // so the sweep isn't ambiguous.
+    if (Math.abs(this.x - j.sprite.x) < 40) side = Math.random() < 0.5 ? -1 : 1;
+    const horizReach = Math.max(260, Math.abs(this.x - j.sprite.x) + 140);
     const endX = j.sprite.x - side * horizReach;
     const endY = startY;
     const midX = j.sprite.x;
-    const midY = j.sprite.y - 4;
+    const midY = j.sprite.y + 6;
 
     this.body.setAllowGravity(false);
     this.facing = endX < this.x ? -1 : 1;
@@ -132,7 +140,7 @@ class CloudBlueberry extends Blueberry {
     this._diveTween = this.scene.tweens.add({
       targets: t,
       v: 1,
-      duration: 720,
+      duration: 780,
       ease: "Sine.easeInOut",
       onUpdate: () => {
         if (!this.active || this.dead) return;
