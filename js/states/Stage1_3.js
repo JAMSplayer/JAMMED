@@ -79,7 +79,7 @@ class Stage1_3 extends Phaser.Scene {
         this.jammyData.facing
       );
     } else {
-      this.jammy = new Jammy(40, 100);
+      this.jammy = new Jammy(120, 100);
     }
     this.jammy.sprite.setDepth(100);
     this.jammy.controlsEnabled = true;

@@ -9,7 +9,7 @@ var controls = {
     aim: "W",
     secondaryAim: "UP",
     secondaryShoot: "N",
-    cycleWeapon: "TAB",
+    cycleWeapon: "C",
 
 
 
