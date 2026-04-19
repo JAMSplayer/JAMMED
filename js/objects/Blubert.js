@@ -10,7 +10,7 @@ class Blubert {
     this.followSpeed = 0.045;
 
     this.scanRange = 320;
-    this.scanInterval = 750;
+    this.scanInterval = 400;
 
     this.stunned = false;
     this.stunDuration = 3000;
@@ -78,10 +78,14 @@ class Blubert {
     if (this.dead || !this.sprite) return;
     if (!this.jammy || !this.jammy.alive) return;
 
-    // Drop a tracked enemy that has scrolled off the visible screen.
+    // Drop a tracked enemy that has died, gone inactive, or scrolled
+    // off screen. Without this, a fresh seed keeps homing toward the
+    // corpse of the last-killed drone until the next scan (750ms),
+    // which can miss the next drone that's already in play.
     if (this.trackedEnemy) {
-      const cam = this.scene.cameras.main;
-      if (!cam.worldView.contains(this.trackedEnemy.x, this.trackedEnemy.y)) {
+      const e = this.trackedEnemy;
+      if (e.dead || !e.active ||
+          !this.scene.cameras.main.worldView.contains(e.x, e.y)) {
         this.trackedEnemy = null;
       }
     }
