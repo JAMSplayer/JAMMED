@@ -57,11 +57,12 @@ class CloudBlueberry extends Blueberry {
 
     if (this.diving) return;
 
-    // Hunt Jammy — hover ~88px above him, tracking his x/y across
-    // the stage. Doesn't give up until killed.
-    const dx = j.sprite.x - this.x;
+    // Hunt Jammy — hover ~88px above a point Jammy is heading toward,
+    // so a straight drop actually lands on him.
+    const leadX = j.sprite.x + (j.sprite.body.velocity.x || 0) * 0.35;
+    const dx = leadX - this.x;
     const dy = (j.sprite.y - 88) - this.y;
-    const maxSpeed = 95;
+    const maxSpeed = 115;
     this.body.setVelocityX(Phaser.Math.Clamp(dx * 1.8, -maxSpeed, maxSpeed));
     this.body.setVelocityY(Phaser.Math.Clamp(dy * 1.8, -maxSpeed, maxSpeed));
     this.facing = j.sprite.x < this.x ? -1 : 1;
@@ -98,55 +99,62 @@ class CloudBlueberry extends Blueberry {
   }
 
   dropBomb() {
-    // Predict where Jammy will be ~0.4s from now and drop so the
-    // bomb actually lands on him rather than directly below the drone.
-    const j = this.scene.jammy;
-    if (!j || !j.alive) { super.dropBomb(); return; }
-    const predictedX = j.sprite.x + (j.sprite.body.velocity.x || 0) * 0.4;
-    const bomb = new BlueberryBomb(this.scene, predictedX, this.y + 8);
+    // Drop from the drone's own position. Tracking in update() already
+    // leads Jammy so a straight drop lands in the right spot — and the
+    // bomb visually trails off the drone instead of materializing mid-air.
+    const bomb = new BlueberryBomb(this.scene, this.x, this.y + 8);
     this.scene.enemies.add(bomb);
   }
 
   diveBomb() {
     this.diving = true;
+    this._diveDamaged = false;
     const j = this.scene.jammy;
     const startX = this.x;
     const startY = this.y;
+
+    // Lateral sweep: drone comes in from its current side, dips down
+    // through Jammy's altitude at the midpoint, and exits on the
+    // opposite side at the starting altitude. Gives the player a
+    // clear intercept window to shoot it mid-flight.
+    const side = this.x < j.sprite.x ? -1 : 1;
+    const horizReach = Math.max(120, Math.abs(this.x - j.sprite.x));
+    const endX = j.sprite.x - side * horizReach;
+    const endY = startY;
+    const midX = j.sprite.x;
+    const midY = j.sprite.y - 4;
+
     this.body.setAllowGravity(false);
-    this.facing = j.sprite.x < this.x ? -1 : 1;
+    this.facing = endX < this.x ? -1 : 1;
     this.play(this.facing === 1 ? "oscillating-right" : "oscillating-left", true);
 
     const t = { v: 0 };
     this._diveTween = this.scene.tweens.add({
       targets: t,
       v: 1,
-      duration: 620,
-      ease: "Quad.easeIn",
+      duration: 720,
+      ease: "Sine.easeInOut",
       onUpdate: () => {
         if (!this.active || this.dead) return;
-        const jm = this.scene.jammy;
-        if (!jm || !jm.alive) return;
-        // Lead slightly so the dive intercepts Jammy's current motion
-        const targetX = jm.sprite.x + (jm.sprite.body.velocity.x || 0) * 0.18;
-        const targetY = jm.sprite.y - 8;
-        const midX = (startX + targetX) / 2;
-        const midY = Math.min(startY, targetY) - 62;
         const u = 1 - t.v;
-        this.x = u*u*startX + 2*u*t.v*midX + t.v*t.v*targetX;
-        this.y = u*u*startY + 2*u*t.v*midY + t.v*t.v*targetY;
+        this.x = u*u*startX + 2*u*t.v*midX + t.v*t.v*endX;
+        this.y = u*u*startY + 2*u*t.v*midY + t.v*t.v*endY;
+        // Damage Jammy when the sweep passes close to him, once per dive
+        if (!this._diveDamaged && this.scene.jammy && this.scene.jammy.alive) {
+          const jm = this.scene.jammy.sprite;
+          const d = Phaser.Math.Distance.Between(this.x, this.y, jm.x, jm.y);
+          if (d < 20) {
+            this._diveDamaged = true;
+            this.scene.jammy.takeDamage();
+          }
+        }
       },
-      onComplete: () => this._diveImpact(),
+      onComplete: () => this._diveComplete(),
     });
   }
 
-  _diveImpact() {
+  _diveComplete() {
     if (this.dead) return;
-    // If close to Jammy on impact, deal damage
-    const j = this.scene.jammy;
-    if (j && j.alive) {
-      const d = Phaser.Math.Distance.Between(this.x, this.y, j.sprite.x, j.sprite.y);
-      if (d < 22) j.takeDamage();
-    }
     this.diving = false;
     this._diveTween = null;
     // update() resumes tracking Jammy next frame — no return tween
