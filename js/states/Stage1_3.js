@@ -134,6 +134,24 @@ class Stage1_3 extends Phaser.Scene {
 
     // Bullets vs ground — AudioWaves don't currently collide with ground, so skip
 
+    // Decoy bushes — visually identical to BushZomberry bushes but empty.
+    // Mixed in so the player can't tell by sight alone; Blubert's eyes
+    // reveal the real ones.
+    this.decoyBushes = [
+      new Bush(this, 540, 176),
+      new Bush(this, 1360, 176),
+      new Bush(this, 1900, 176),
+      new Bush(this, 2280, 176),
+    ];
+
+    // Hanging thorn-fruit rigs — moving platform + prickly vine + fruit.
+    // Built on top of the spawned HornedFruit instances; the platform
+    // tweens vertically and the fruit + vine follow until dropped.
+    this.hornedRigs = [];
+    this.enemies.getChildren()
+      .filter(e => e instanceof HornedFruit)
+      .forEach((hf, i) => this._buildHornedRig(hf, i));
+
     // Blubert companion
     this.blubert = new Blubert(this, this.jammy);
 
@@ -148,6 +166,69 @@ class Stage1_3 extends Phaser.Scene {
     this.enemies.getChildren().forEach((enemy) => {
       if (enemy.update) enemy.update();
     });
+    if (this.hornedRigs) this.hornedRigs.forEach(r => r.update());
+  }
+
+  _buildHornedRig(hf, index) {
+    const baseY = hf.y;            // fruit's hang anchor
+    const platformY = baseY - 44;  // platform above
+    const platform = this.add.rectangle(hf.x, platformY, 44, 6, 0x8b6f4a);
+    platform.setDepth(4);
+    const platformTop = this.add.rectangle(hf.x, platformY - 3, 44, 2, 0x6a5432);
+    platformTop.setDepth(5);
+
+    // Prickly vine — main stalk plus a few thorns.
+    const vineGfx = this.add.graphics();
+    vineGfx.setDepth(3);
+
+    // Offset phase so multiple rigs don't move in sync
+    const phase = (index % 3) * 700;
+    const amplitude = 26;
+    const period = 2400;
+    const startTime = this.time.now - phase;
+
+    const rig = {
+      hf, platform, platformTop, vineGfx,
+      platformBaseY: platformY,
+      amplitude, period, startTime,
+      update: () => {
+        if (!hf || !hf.scene) {
+          vineGfx.clear();
+          return;
+        }
+        const t = (this.time.now - startTime) / period;
+        const py = platformY + Math.sin(t * Math.PI * 2) * amplitude;
+        platform.y = py;
+        platformTop.y = py - 3;
+        if (!hf.dropped) {
+          hf.y = py + 44;      // keep the fruit hanging the same distance below
+          hf.baseY = hf.y;     // so the sin-bob in HornedFruit is around the current y
+        }
+        vineGfx.clear();
+        if (!hf.dropped) {
+          // Vine stalk
+          vineGfx.lineStyle(2, 0x2f6a2a, 1);
+          vineGfx.beginPath();
+          vineGfx.moveTo(hf.x, py + 3);
+          vineGfx.lineTo(hf.x, hf.y - 6);
+          vineGfx.strokePath();
+          // Thorns — alternating left/right barbs along the vine
+          vineGfx.fillStyle(0x2f6a2a, 1);
+          const vineLen = hf.y - 6 - (py + 3);
+          const steps = Math.max(3, Math.floor(vineLen / 6));
+          for (let s = 1; s < steps; s++) {
+            const ty = py + 3 + (vineLen * s) / steps;
+            const side = s % 2 === 0 ? -1 : 1;
+            vineGfx.fillTriangle(
+              hf.x, ty,
+              hf.x + side * 4, ty - 2,
+              hf.x + side * 4, ty + 2
+            );
+          }
+        }
+      },
+    };
+    this.hornedRigs.push(rig);
   }
 
   changeScene() {

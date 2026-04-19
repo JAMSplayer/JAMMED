@@ -4,54 +4,32 @@ class BushZomberry extends Raspberry {
 
     this.hidden = true;
     this.detected = false;
-    // Emerges while Jammy still has room to cycle weapon (C) and fire (Q).
-    // Jammy walks ~125 px/s, so ~120 px gives roughly a second of reaction.
-    this.emergeRange = 120;
+    // ms between eyes appearing (detect) and the enemy actually popping out
+    this.emergeDelayMs = 1100;
 
     this.setVisible(false);
     this.body.setEnable(false);
     this.body.setAllowGravity(false);
 
-    if (!scn.anims.exists("bush-empty")) {
-      scn.anims.create({
-        key: "bush-empty",
-        frames: [
-          { key: "bush", frame: "empty1" },
-          { key: "bush", frame: "empty2" },
-        ],
-        frameRate: 2, repeat: -1,
-      });
-      scn.anims.create({
-        key: "bush-eyes",
-        frames: [
-          { key: "bush", frame: "eyes1" },
-          { key: "bush", frame: "eyes2" },
-        ],
-        frameRate: 5, repeat: -1,
-      });
-    }
-
     // Tilemap createFromObjects calls `new BushZomberry(scene)` then
-    // .setPosition(x, y), so defer bushSprite creation to the position
+    // .setPosition(x, y), so defer bush visual creation to the position
     // setter — at construction time x/y are undefined.
     if (typeof x === "number" && typeof y === "number") {
-      this._createBushSprite(x, y);
+      this._createBushVisual(x, y);
     }
   }
 
-  _createBushSprite(x, y) {
-    if (this.bushSprite) return;
-    this.bushSprite = this.scene.add.sprite(x, y + 4, "bush", "empty1");
-    this.bushSprite.setDepth(50);
-    this.bushSprite.play("bush-empty");
+  _createBushVisual(x, y) {
+    if (this.bush) return;
+    this.bush = new Bush(this.scene, x, y);
   }
 
   setPosition(x, y, z, w) {
     super.setPosition(x, y, z, w);
-    if (!this.bushSprite && typeof x === "number" && typeof y === "number") {
-      this._createBushSprite(x, y);
-    } else if (this.bushSprite && typeof x === "number" && typeof y === "number") {
-      this.bushSprite.setPosition(x, y + 4);
+    if (!this.bush && typeof x === "number" && typeof y === "number") {
+      this._createBushVisual(x, y);
+    } else if (this.bush && typeof x === "number" && typeof y === "number") {
+      this.bush.setPosition(x, y);
     }
     return this;
   }
@@ -59,7 +37,9 @@ class BushZomberry extends Raspberry {
   detect() {
     if (this.detected || !this.hidden || this.dead) return;
     this.detected = true;
-    if (this.bushSprite) this.bushSprite.play("bush-eyes");
+    if (this.bush) this.bush.setEyesVisible(true);
+    // Short warning window before the zomberry bursts out
+    this.scene.time.delayedCall(this.emergeDelayMs, () => this.emerge());
   }
 
   emerge() {
@@ -68,43 +48,29 @@ class BushZomberry extends Raspberry {
     this.setVisible(true);
     this.body.setEnable(true);
     this.body.setAllowGravity(true);
-    if (this.bushSprite) {
-      this.bushSprite.destroy();
-      this.bushSprite = null;
-    }
+    // Bush stays behind the zomberry as a visual remnant (eyes off)
+    if (this.bush) this.bush.setEyesVisible(false);
   }
 
   explodeInBush() {
     if (this.dead) return;
-    // Instant kill while hidden — fall out of the bush dead
-    if (this.bushSprite) {
-      this.bushSprite.destroy();
-      this.bushSprite = null;
-    }
+    // Seed blew the bush — kill the zomberry. Leave the bush for ambience.
     this.hidden = false;
     this.setVisible(true);
     this.body.setEnable(true);
     this.body.setAllowGravity(true);
+    if (this.bush) this.bush.setEyesVisible(false);
     this.hp = 0;
     this.die();
   }
 
   update() {
-    if (this.hidden) {
-      if (this.detected && this.scene.jammy && this.scene.jammy.alive) {
-        const d = Phaser.Math.Distance.Between(this.x, this.y, this.scene.jammy.sprite.x, this.scene.jammy.sprite.y);
-        if (d < this.emergeRange) this.emerge();
-      }
-      return;
-    }
+    if (this.hidden) return;
     super.update();
   }
 
   die() {
-    if (this.bushSprite) {
-      this.bushSprite.destroy();
-      this.bushSprite = null;
-    }
+    // Leave the bush visible — it's just vegetation now.
     super.die();
   }
 }

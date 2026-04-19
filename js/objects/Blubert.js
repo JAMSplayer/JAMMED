@@ -73,7 +73,15 @@ class Blubert {
     if (this.trackedEnemy && this.trackedEnemy.active &&
         !this.trackedEnemy.dead && this.trackedEnemy.scene) {
       targetX = this.trackedEnemy.x;
-      targetY = this.trackedEnemy.y - 24;
+      // Descend only as Jammy closes on the enemy — stays high and
+      // clear of the seed blast radius until the hit is imminent.
+      const distJE = Phaser.Math.Distance.Between(
+        this.jammy.sprite.x, this.jammy.sprite.y,
+        this.trackedEnemy.x, this.trackedEnemy.y
+      );
+      const closeness = Phaser.Math.Clamp(1 - distJE / 220, 0, 1);
+      const aboveEnemy = 90 - closeness * 60;
+      targetY = this.trackedEnemy.y - aboveEnemy;
       tilting = true;
     } else {
       this.trackedEnemy = null;
