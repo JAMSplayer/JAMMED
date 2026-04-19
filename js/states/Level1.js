@@ -146,11 +146,7 @@ class Level1 extends Phaser.Scene {
       if (this._teleporting) return;
       this._teleporting = true;
       this.devPortal.destroy();
-      // Defer to next frame so we don't swap scenes mid-physics-step
-      this.time.delayedCall(10, () => {
-        this.scene.stop("Level1");
-        this.scene.start("Stage1_3");
-      });
+      this.time.delayedCall(10, () => this.scene.start("Stage1_3"));
     });
 
     // Sync UI weapon indicator with Jammy's starting weapon
