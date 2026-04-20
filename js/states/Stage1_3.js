@@ -239,7 +239,7 @@ class Stage1_3 extends Phaser.Scene {
     const { x, y, w, amp, period, fruits } = cfg;
     // Solid wooden platform
     const plat = this.add.rectangle(x, y, w, 6, 0x8b6f4a);
-    plat.setDepth(4);
+    plat.setDepth(54);
     this.physics.add.existing(plat);
     plat.body.setAllowGravity(false);
     plat.body.setImmovable(true);
@@ -251,17 +251,18 @@ class Stage1_3 extends Phaser.Scene {
     this.fruitPlatforms.add(plat);
     // Top capstone (visual only, no physics)
     const cap = this.add.rectangle(x, y - 3, w, 2, 0x6a5432);
-    cap.setDepth(5);
+    cap.setDepth(55);
 
     // Vine graphics for the whole cluster
     const vineGfx = this.add.graphics();
-    vineGfx.setDepth(3);
+    vineGfx.setDepth(53);
 
     // Spawn the hanging fruits. HornedFruit constructor adds the sprite
     // to scene/enemies; setPosition captures baseY for its sin-bob.
     const hfs = fruits.map(f => {
       const hf = new HornedFruit(this);
       hf.setPosition(x + f.ox, y + f.len);
+      hf.setDepth(53);
       return { hf, ox: f.ox, len: f.len };
     });
 
