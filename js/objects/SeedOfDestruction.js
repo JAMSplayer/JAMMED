@@ -102,19 +102,27 @@ class SeedOfDestruction extends Phaser.Physics.Arcade.Sprite {
       this.rotation = Math.atan2(vy, vx);
     }
     // Soft homing toward whatever Blubert is currently tracking.
-    // Pull ramps with the inverse of distance so seeds close to the
-    // target curve harder (enough to actually connect) while distant
-    // shots still feel like Jammy's own arc.
+    // Aims at a small lead-ahead of the target's velocity so moving
+    // drones don't slip past the seed, and adds extra upward thrust
+    // when the target is above the seed to counteract gravity (900
+    // downward) — otherwise seeds tend to fall under drones they're
+    // supposedly homing onto.
     const blu = this.scene.blubert;
     if (blu && blu.trackedEnemy && blu.trackedEnemy.active && !blu.trackedEnemy.dead) {
       const e = blu.trackedEnemy;
-      const dx = e.x - this.x;
-      const dy = e.y - this.y;
+      const tvx = (e.body && e.body.velocity && e.body.velocity.x) || 0;
+      const tvy = (e.body && e.body.velocity && e.body.velocity.y) || 0;
+      const tx = e.x + tvx * 0.15;
+      const ty = e.y + tvy * 0.15;
+      const dx = tx - this.x;
+      const dy = ty - this.y;
       const dist = Math.hypot(dx, dy);
-      if (dist > 4 && dist < 400) {
-        const pull = Phaser.Math.Clamp(600 - dist, 220, 520);
+      if (dist > 4 && dist < 420) {
+        const pull = Phaser.Math.Clamp(640 - dist, 260, 560);
+        let ay = (dy / dist) * pull;
+        if (dy < -20) ay -= 360; // counter-gravity boost toward elevated targets
         this.body.setAccelerationX((dx / dist) * pull);
-        this.body.setAccelerationY((dy / dist) * pull);
+        this.body.setAccelerationY(ay);
         return;
       }
     }
