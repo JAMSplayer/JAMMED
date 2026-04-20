@@ -84,11 +84,8 @@ class Stage1_3 extends Phaser.Scene {
       key: "raspberry",
       classType: BushZomberry,
     });
-    this.map.createFromObjects("HornedFruitLayer", {
-      name: "HornedFruit",
-      key: "horned-fruit",
-      classType: HornedFruit,
-    });
+    // HornedFruit are no longer spawned from the tilemap; each
+    // Rocket-Axe fruit-platform owns its own cluster (see _buildFruitPlatforms).
     this.map.createFromObjects("WatermelonSnapperLayer", {
       name: "WatermelonSnapper",
       key: "watermelon-snapper",
@@ -176,15 +173,15 @@ class Stage1_3 extends Phaser.Scene {
       new SeedAmmoPickup(this, 2340, 120),
     ];
 
-    // Hanging thorn-fruit rigs — moving platform + prickly vine + fruit.
-    // Built on top of the spawned HornedFruit instances; the platform
-    // tweens vertically and the fruit + vine follow until dropped.
-    // Vine lengths vary per fruit so the canopy reads as uneven foliage.
+    // Fruit-platforms — each solid platform bobs vertically and hosts
+    // multiple HornedFruit hanging at staggered vine lengths below it.
+    this.fruitPlatforms = this.physics.add.group({
+      allowGravity: false,
+      immovable: true,
+    });
+    this.physics.add.collider(this.jammy.sprite, this.fruitPlatforms);
     this.hornedRigs = [];
-    const vineLengths = [38, 64, 46, 72, 32, 84, 52, 42];
-    this.enemies.getChildren()
-      .filter(e => e instanceof HornedFruit)
-      .forEach((hf, i) => this._buildHornedRig(hf, i, vineLengths[i % vineLengths.length]));
+    this._buildFruitPlatforms();
 
     // Blubert companion
     this.blubert = new Blubert(this, this.jammy);
@@ -222,61 +219,95 @@ class Stage1_3 extends Phaser.Scene {
     }
   }
 
-  _buildHornedRig(hf, index, vineLen = 44) {
-    const baseY = hf.y;                    // fruit's hang anchor
-    const platformY = baseY - vineLen;     // platform hangs this far above
-    const platform = this.add.rectangle(hf.x, platformY, 44, 6, 0x8b6f4a);
-    platform.setDepth(4);
-    const platformTop = this.add.rectangle(hf.x, platformY - 3, 44, 2, 0x6a5432);
-    platformTop.setDepth(5);
+  _buildFruitPlatforms() {
+    // Each platform is a solid bar Jammy can land on, bobbing up/down,
+    // with several horned fruits hanging from its underside at varying
+    // vine lengths. fruits[].ox is horizontal offset from platform
+    // center; fruits[].len is the vine length at rest.
+    const platforms = [
+      { x: 640,  y: 74,  w: 74, amp: 20, period: 2400,
+        fruits: [{ox: -26, len: 32}, {ox: 0, len: 58}, {ox: 24, len: 40}] },
+      { x: 1480, y: 86,  w: 92, amp: 24, period: 2800,
+        fruits: [{ox: -32, len: 48}, {ox: -8, len: 28}, {ox: 18, len: 66}, {ox: 36, len: 36}] },
+      { x: 2200, y: 62,  w: 108, amp: 22, period: 2200,
+        fruits: [{ox: -40, len: 72}, {ox: -14, len: 42}, {ox: 12, len: 56}, {ox: 40, len: 28}] },
+    ];
+    platforms.forEach((cfg, pi) => this._buildFruitPlatform(cfg, pi));
+  }
 
-    // Prickly vine — main stalk plus a few thorns.
+  _buildFruitPlatform(cfg, index) {
+    const { x, y, w, amp, period, fruits } = cfg;
+    // Solid wooden platform
+    const plat = this.add.rectangle(x, y, w, 6, 0x8b6f4a);
+    plat.setDepth(4);
+    this.physics.add.existing(plat);
+    plat.body.setAllowGravity(false);
+    plat.body.setImmovable(true);
+    this.fruitPlatforms.add(plat);
+    // Top capstone (visual only, no physics)
+    const cap = this.add.rectangle(x, y - 3, w, 2, 0x6a5432);
+    cap.setDepth(5);
+
+    // Vine graphics for the whole cluster
     const vineGfx = this.add.graphics();
     vineGfx.setDepth(3);
 
-    // Offset phase so multiple rigs don't move in sync
-    const phase = (index % 3) * 700;
-    const amplitude = 26;
-    const period = 2400;
+    // Spawn the hanging fruits. HornedFruit constructor adds the sprite
+    // to scene/enemies; setPosition captures baseY for its sin-bob.
+    const hfs = fruits.map(f => {
+      const hf = new HornedFruit(this);
+      hf.setPosition(x + f.ox, y + f.len);
+      return { hf, ox: f.ox, len: f.len };
+    });
+
+    // Stagger phases between platforms so they don't all dip in sync
+    const phase = index * 600;
     const startTime = this.time.now - phase;
+    const baseY = y;
 
     const rig = {
-      hf, platform, platformTop, vineGfx,
-      platformBaseY: platformY,
-      amplitude, period, startTime,
       update: () => {
-        if (!hf || !hf.scene) {
-          vineGfx.clear();
-          return;
-        }
         const t = (this.time.now - startTime) / period;
-        const py = platformY + Math.sin(t * Math.PI * 2) * amplitude;
-        platform.y = py;
-        platformTop.y = py - 3;
-        if (!hf.dropped) {
-          hf.y = py + vineLen; // keep fruit hanging the vine-length below
-          hf.baseY = hf.y;     // so the sin-bob in HornedFruit is around the current y
+        const py = baseY + Math.sin(t * Math.PI * 2) * amp;
+        plat.y = py;
+        cap.y = py - 3;
+        // Refresh the body manually so the collider tracks the moved
+        // position (immovable bodies don't auto-sync from velocity).
+        if (plat.body && typeof plat.body.updateFromGameObject === "function") {
+          plat.body.updateFromGameObject();
         }
+
         vineGfx.clear();
-        if (!hf.dropped) {
-          // Vine stalk
-          vineGfx.lineStyle(2, 0x2f6a2a, 1);
-          vineGfx.beginPath();
-          vineGfx.moveTo(hf.x, py + 3);
-          vineGfx.lineTo(hf.x, hf.y - 6);
-          vineGfx.strokePath();
-          // Thorns — alternating left/right barbs along the vine
-          vineGfx.fillStyle(0x2f6a2a, 1);
-          const vineLen = hf.y - 6 - (py + 3);
-          const steps = Math.max(3, Math.floor(vineLen / 6));
-          for (let s = 1; s < steps; s++) {
-            const ty = py + 3 + (vineLen * s) / steps;
-            const side = s % 2 === 0 ? -1 : 1;
-            vineGfx.fillTriangle(
-              hf.x, ty,
-              hf.x + side * 4, ty - 2,
-              hf.x + side * 4, ty + 2
-            );
+        for (const { hf, ox, len } of hfs) {
+          if (!hf || !hf.scene) continue;
+          const fx = x + ox;
+          if (!hf.dropped) {
+            hf.x = fx;
+            hf.y = py + len;
+            hf.baseY = hf.y;
+          }
+          // Only draw vine if fruit still hanging
+          if (!hf.dropped) {
+            const topY = py + 3;
+            const botY = hf.y - 6;
+            vineGfx.lineStyle(2, 0x2f6a2a, 1);
+            vineGfx.beginPath();
+            vineGfx.moveTo(fx, topY);
+            vineGfx.lineTo(fx, botY);
+            vineGfx.strokePath();
+            // Thorns
+            vineGfx.fillStyle(0x2f6a2a, 1);
+            const vineLen = botY - topY;
+            const steps = Math.max(3, Math.floor(vineLen / 6));
+            for (let s = 1; s < steps; s++) {
+              const ty = topY + (vineLen * s) / steps;
+              const side = s % 2 === 0 ? -1 : 1;
+              vineGfx.fillTriangle(
+                fx, ty,
+                fx + side * 4, ty - 2,
+                fx + side * 4, ty + 2
+              );
+            }
           }
         }
       },
