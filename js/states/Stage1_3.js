@@ -243,6 +243,11 @@ class Stage1_3 extends Phaser.Scene {
     this.physics.add.existing(plat);
     plat.body.setAllowGravity(false);
     plat.body.setImmovable(true);
+    // One-way platform: only the top face blocks. Jammy can jump up
+    // through from below and pass sideways; landing from above lands.
+    plat.body.checkCollision.down = false;
+    plat.body.checkCollision.left = false;
+    plat.body.checkCollision.right = false;
     this.fruitPlatforms.add(plat);
     // Top capstone (visual only, no physics)
     const cap = this.add.rectangle(x, y - 3, w, 2, 0x6a5432);
