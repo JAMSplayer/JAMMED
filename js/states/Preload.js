@@ -75,6 +75,11 @@ class Preload extends Phaser.Scene {
       "assets/img/sprites/jammy/jammy.png",
       "assets/img/sprites/jammy/jammy.json"
     );
+    this.load.atlas(
+      "jammy-rocketaxe",
+      "assets/img/sprites/jammy-rocketaxe/jammy-rocketaxe.png",
+      "assets/img/sprites/jammy-rocketaxe/jammy-rocketaxe.json"
+    );
     this.load.image(
       "audio-wave",
       "assets/img/sprites/audio-wave/audio-wave.png"
@@ -291,6 +296,16 @@ class Preload extends Phaser.Scene {
         suffix: "",
       }),
       frameRate: 4,
+      repeat: -1,
+    });
+    scene.anims.create({
+      key: "jammy-rocketaxe-right",
+      frames: scene.anims.generateFrameNames("jammy-rocketaxe", {
+        start: 1,
+        end: 4,
+        prefix: "rocketaxe-right",
+      }),
+      frameRate: 14,
       repeat: -1,
     });
     scene.anims.create({

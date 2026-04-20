@@ -520,91 +520,29 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
 
   _rocketAxeBoost() {
     const dirX = this.facing === "right" ? 1 : -1;
-    // Strong vertical kick + horizontal thrust — creates a long
-    // airborne arc rather than a second hop.
     this.sprite.body.velocity.y = -560;
     this.sprite.body.velocity.x = dirX * 300;
     this.jumping = true;
     this.falling = false;
 
     const s = scene;
-
-    // Rocket-Axe guitar — Jammy rides it during the boost.
-    Jammy._ensureRocketAxeTexture(s);
-    if (this._axeSprite) this._axeSprite.destroy();
-    this._axeSprite = s.add.sprite(this.sprite.x, this.sprite.y + 12, "rocket-axe");
-    this._axeSprite.setFlipX(dirX === -1);
-    this._axeSprite.setDepth(99);
-    // Small wobble rotation so it reads as a rocket ride
-    s.tweens.add({
-      targets: this._axeSprite,
-      angle: dirX * 8,
-      yoyo: true,
-      repeat: 3,
-      duration: 140,
-      ease: "Sine.easeInOut",
-    });
-
-    // Flame exhaust out the tail-end of the guitar body
-    if (this._rocketFlameTimer) this._rocketFlameTimer.remove(false);
     const boostMs = 520;
-    this._rocketFlameTimer = s.time.addEvent({
-      delay: 24,
-      repeat: Math.floor(boostMs / 24),
-      callback: () => {
-        if (!this._axeSprite || !this._axeSprite.active) return;
-        // Tail is on the opposite side of facing
-        const tailX = this._axeSprite.x + (dirX === 1 ? -18 : 18);
-        const tailY = this._axeSprite.y + 2;
-        const flame = s.add.circle(
-          tailX + (Math.random() - 0.5) * 4,
-          tailY + (Math.random() - 0.5) * 3,
-          3 + Math.random() * 2,
-          Math.random() < 0.5 ? 0xff5a20 : 0xffd060,
-          0.9
-        );
-        flame.setDepth(98);
-        s.tweens.add({
-          targets: flame,
-          x: tailX - dirX * 14,
-          y: tailY + 6,
-          alpha: 0,
-          scale: 0.3,
-          duration: 320,
-          ease: "Cubic.easeOut",
-          onComplete: () => flame.destroy(),
-        });
-      },
-    });
 
-    // Keep the guitar under Jammy's feet for the boost duration,
-    // then fade it out (he "kicks off" it as gravity retakes).
-    if (this._rocketFollowTimer) this._rocketFollowTimer.remove(false);
-    this._rocketFollowTimer = s.time.addEvent({
-      delay: 16,
-      loop: true,
-      callback: () => {
-        if (!this._axeSprite || !this.sprite || !this.sprite.active) return;
-        this._axeSprite.x = this.sprite.x;
-        this._axeSprite.y = this.sprite.y + 12;
-      },
-    });
-    s.time.delayedCall(boostMs, () => {
-      if (this._rocketFollowTimer) { this._rocketFollowTimer.remove(false); this._rocketFollowTimer = null; }
-      if (this._axeSprite) {
-        const axe = this._axeSprite;
-        this._axeSprite = null;
-        s.tweens.add({
-          targets: axe,
-          alpha: 0,
-          y: axe.y + 10,
-          angle: axe.angle + dirX * 40,
-          duration: 220,
-          ease: "Cubic.easeIn",
-          onComplete: () => axe.destroy(),
-        });
-      }
-    });
+    // Swap Jammy's sprite to the hand-composited rocket-axe atlas
+    // (body + guitar-under-feet + flame). Original frames are 32x32,
+    // this one is 40x50, so we remember the original body size and
+    // restore it on boost end.
+    if (!this._rocketOrigBody) {
+      this._rocketOrigBody = {
+        w: this.sprite.body.width,
+        h: this.sprite.body.height,
+        ox: this.sprite.body.offset.x,
+        oy: this.sprite.body.offset.y,
+      };
+    }
+    this.sprite.setTexture("jammy-rocketaxe", "rocketaxe-right1");
+    this.sprite.setFlipX(dirX === -1);
+    this.sprite.play("jammy-rocketaxe-right", true);
 
     // Launch sfx
     if (s.cache.audio.exists("laserSound")) {
@@ -617,57 +555,15 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
         }
       });
     }
-  }
 
-  static _ensureRocketAxeTexture(scene) {
-    if (scene.textures.exists("rocket-axe")) return;
-    // 44x18 Flying-V guitar: red wings, wooden neck, headstock, strings.
-    // Oriented pointy-end RIGHT (neck on the right). flipX for left.
-    const g = scene.make.graphics({ x: 0, y: 0, add: false });
-    // Body — red V wings
-    g.fillStyle(0xc03020, 1);
-    // Upper wing triangle
-    g.fillTriangle(0, 0, 20, 9, 0, 8);
-    // Lower wing triangle
-    g.fillTriangle(0, 18, 20, 9, 0, 10);
-    // Filled center so the V looks like a solid body
-    g.fillRect(0, 6, 22, 6);
-    // Outline
-    g.lineStyle(1, 0x6a1a10, 1);
-    g.beginPath();
-    g.moveTo(0, 0);
-    g.lineTo(22, 9);
-    g.lineTo(0, 18);
-    g.closePath();
-    g.strokePath();
-    // Pickup — dark rectangle on the body
-    g.fillStyle(0x181818, 1);
-    g.fillRect(12, 7, 5, 4);
-    // Neck
-    g.fillStyle(0x5a3a1e, 1);
-    g.fillRect(22, 7, 16, 4);
-    g.lineStyle(1, 0x2e1a08, 1);
-    g.strokeRect(22, 7, 16, 4);
-    // Frets
-    g.lineStyle(0.6, 0x2e1a08, 1);
-    for (let fx = 25; fx < 38; fx += 3) {
-      g.lineBetween(fx, 7, fx, 11);
-    }
-    // Headstock
-    g.fillStyle(0x3a240e, 1);
-    g.fillRect(38, 5, 6, 8);
-    // Tuning pegs
-    g.fillStyle(0xd0d0d0, 1);
-    g.fillCircle(40, 6, 0.9);
-    g.fillCircle(42, 6, 0.9);
-    g.fillCircle(40, 12, 0.9);
-    g.fillCircle(42, 12, 0.9);
-    // Strings
-    g.lineStyle(0.5, 0xdcdcdc, 0.85);
-    g.lineBetween(4, 8, 38, 8);
-    g.lineBetween(4, 10, 38, 10);
-    g.generateTexture("rocket-axe", 44, 18);
-    g.destroy();
+    // Revert sprite at boost end
+    if (this._rocketEndTimer) this._rocketEndTimer.remove(false);
+    this._rocketEndTimer = s.time.delayedCall(boostMs, () => {
+      if (!this.sprite || !this.sprite.active) return;
+      this.sprite.setFlipX(false);
+      if (this.facing === "right") this.sprite.play("resting-right", true);
+      else this.sprite.play("resting-left", true);
+    });
   }
 
   powerUp(type, val = 0) {
