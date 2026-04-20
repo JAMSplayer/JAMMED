@@ -20,12 +20,14 @@ class Jammy {
     this.facing = facing ? facing : "right";
     this.antTokens = 0;
     this.currentWeapon = "sonic";
-    this.availableWeapons = ["sonic", "seed"];
+    this.availableWeapons = ["sonic", "seed", "rocketAxe"];
     this.seedCooldownMs = 320;
     this.lastSeedTime = 0;
     this.seedAmmo = 1;
     this.seedAmmoMax = 12;
     this.lastDryClickTime = 0;
+    this.rocketCooldownMs = 1400;
+    this.lastRocketTime = 0;
     this.controlsEnabled = true;
     this.alive = true;
     this.walkingLeft = false;
@@ -353,10 +355,20 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
   shoot() {
     if (this.currentWeapon === "seed") {
       this.fireSeed();
+    } else if (this.currentWeapon === "rocketAxe") {
+      this.fireRocketAxe();
     } else {
       this.fireSonic();
     }
     this.playShootingPose();
+  }
+
+  fireRocketAxe() {
+    const now = scene.time.now;
+    if (now - this.lastRocketTime < this.rocketCooldownMs) return;
+    this.lastRocketTime = now;
+    const spawnX = this.facing === "right" ? this.sprite.x + 12 : this.sprite.x - 12;
+    new RocketAxe(scene, spawnX, this.sprite.y, this.facing);
   }
 
   playShootingPose() {

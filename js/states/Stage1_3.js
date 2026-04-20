@@ -11,9 +11,12 @@ class Stage1_3 extends Phaser.Scene {
     this.sound.stopAll();
     this.sound.play("Level1MusicLoop", { loop: true });
 
-    // Make sure the teardrop texture exists before the HUD tries to show it
+    // Make sure weapon projectile textures exist before the HUD tries to show them
     if (typeof SeedOfDestruction !== "undefined" && SeedOfDestruction.ensureTexture) {
       SeedOfDestruction.ensureTexture(this);
+    }
+    if (typeof RocketAxe !== "undefined" && RocketAxe.ensureTexture) {
+      RocketAxe.ensureTexture(this);
     }
     // Pink sunset sky — camera background
     this.cameras.main.setBackgroundColor("#f5a8b8");
@@ -177,10 +180,12 @@ class Stage1_3 extends Phaser.Scene {
     // Hanging thorn-fruit rigs — moving platform + prickly vine + fruit.
     // Built on top of the spawned HornedFruit instances; the platform
     // tweens vertically and the fruit + vine follow until dropped.
+    // Vine lengths vary per fruit so the canopy reads as uneven foliage.
     this.hornedRigs = [];
+    const vineLengths = [38, 64, 46, 72, 32, 84, 52, 42];
     this.enemies.getChildren()
       .filter(e => e instanceof HornedFruit)
-      .forEach((hf, i) => this._buildHornedRig(hf, i));
+      .forEach((hf, i) => this._buildHornedRig(hf, i, vineLengths[i % vineLengths.length]));
 
     // Blubert companion
     this.blubert = new Blubert(this, this.jammy);
@@ -218,9 +223,9 @@ class Stage1_3 extends Phaser.Scene {
     }
   }
 
-  _buildHornedRig(hf, index) {
-    const baseY = hf.y;            // fruit's hang anchor
-    const platformY = baseY - 44;  // platform above
+  _buildHornedRig(hf, index, vineLen = 44) {
+    const baseY = hf.y;                    // fruit's hang anchor
+    const platformY = baseY - vineLen;     // platform hangs this far above
     const platform = this.add.rectangle(hf.x, platformY, 44, 6, 0x8b6f4a);
     platform.setDepth(4);
     const platformTop = this.add.rectangle(hf.x, platformY - 3, 44, 2, 0x6a5432);
@@ -250,7 +255,7 @@ class Stage1_3 extends Phaser.Scene {
         platform.y = py;
         platformTop.y = py - 3;
         if (!hf.dropped) {
-          hf.y = py + 44;      // keep the fruit hanging the same distance below
+          hf.y = py + vineLen; // keep fruit hanging the vine-length below
           hf.baseY = hf.y;     // so the sin-bob in HornedFruit is around the current y
         }
         vineGfx.clear();
