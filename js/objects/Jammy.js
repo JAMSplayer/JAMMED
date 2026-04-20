@@ -296,8 +296,13 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
 
   update() {
     if (this.alive) {
-      if(this.leftIsDown){this.sprite.body.setVelocityX(-this.walkSpeed);}
-      if(this.rightIsDown){this.sprite.body.setVelocityX(this.walkSpeed);}
+      // Skip left/right walk override while the Rocket Axe is firing so
+      // the boost's 300px/s horizontal impulse isn't clamped back down
+      // to walkSpeed on the very next frame when Jammy is running.
+      if (!this.rocketBoostActive) {
+        if(this.leftIsDown){this.sprite.body.setVelocityX(-this.walkSpeed);}
+        if(this.rightIsDown){this.sprite.body.setVelocityX(this.walkSpeed);}
+      }
       if (
         !this.falling &&
         !this.jumping &&
@@ -524,6 +529,7 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
     this.sprite.body.velocity.x = dirX * 300;
     this.jumping = true;
     this.falling = false;
+    this.rocketBoostActive = true;
 
     const s = scene;
     const boostMs = 520;
@@ -559,6 +565,7 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
     // Revert sprite at boost end
     if (this._rocketEndTimer) this._rocketEndTimer.remove(false);
     this._rocketEndTimer = s.time.delayedCall(boostMs, () => {
+      this.rocketBoostActive = false;
       if (!this.sprite || !this.sprite.active) return;
       this.sprite.setFlipX(false);
       if (this.facing === "right") this.sprite.play("resting-right", true);
