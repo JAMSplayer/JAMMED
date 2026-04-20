@@ -515,6 +515,7 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
       // fire, propelling him up and forward in a long arc.
       this._rocketAxeBoost();
       this.canDoubleJump = false;
+      return; // _rocketAxeBoost owns the texture + animation during the boost
     }
     if (this.facing == "right") {
       this.sprite.play("jumping-right", true);
