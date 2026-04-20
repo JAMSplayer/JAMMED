@@ -111,11 +111,13 @@ class Stage1_3 extends Phaser.Scene {
     this.children.bringToTop(this.jammy.sprite);
 
     this.cameras.main.startFollow(this.jammy.sprite);
+    // Extra 240px of vertical headroom so the camera follows Jammy up
+    // during a Rocket Axe boost instead of leaving him off the top edge.
     this.cameras.main.setBounds(
       0,
-      0,
+      -240,
       this.map.widthInPixels,
-      this.map.heightInPixels
+      this.map.heightInPixels + 240
     );
 
     // Collisions

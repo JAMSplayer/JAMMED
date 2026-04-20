@@ -102,11 +102,12 @@ class Level1 extends Phaser.Scene {
 
     // Make the camera follow Jammy
     this.cameras.main.startFollow(this.jammy.sprite);
+    // Vertical headroom so the Rocket Axe boost stays in frame.
     this.cameras.main.setBounds(
       0,
-      0,
+      -240,
       this.map.widthInPixels,
-      this.map.heightInPixels
+      this.map.heightInPixels + 240
     );
     // Check for collectibles and award tokens
     this.physics.add.overlap(
