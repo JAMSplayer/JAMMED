@@ -20,14 +20,12 @@ class Jammy {
     this.facing = facing ? facing : "right";
     this.antTokens = 0;
     this.currentWeapon = "sonic";
-    this.availableWeapons = ["sonic", "seed", "rocketAxe"];
+    this.availableWeapons = ["sonic", "seed"];
     this.seedCooldownMs = 320;
     this.lastSeedTime = 0;
     this.seedAmmo = 1;
     this.seedAmmoMax = 12;
     this.lastDryClickTime = 0;
-    this.rocketCooldownMs = 1400;
-    this.lastRocketTime = 0;
     this.controlsEnabled = true;
     this.alive = true;
     this.walkingLeft = false;
@@ -355,20 +353,10 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
   shoot() {
     if (this.currentWeapon === "seed") {
       this.fireSeed();
-    } else if (this.currentWeapon === "rocketAxe") {
-      this.fireRocketAxe();
     } else {
       this.fireSonic();
     }
     this.playShootingPose();
-  }
-
-  fireRocketAxe() {
-    const now = scene.time.now;
-    if (now - this.lastRocketTime < this.rocketCooldownMs) return;
-    this.lastRocketTime = now;
-    const spawnX = this.facing === "right" ? this.sprite.x + 12 : this.sprite.x - 12;
-    new RocketAxe(scene, spawnX, this.sprite.y, this.facing);
   }
 
   playShootingPose() {
@@ -518,19 +506,67 @@ this.secondaryShootButton = scene.input.keyboard.addKey(controls.secondaryShoot)
 
       this.canDoubleJump = true;
     } else if (this.canDoubleJump) {
-      this.sprite.body.velocity.y = this.jumpVelocity;
-      this.jumping = true;
-      this.falling = false;
+      // Rocket Axe — Jammy kicks off his guitar and the boosters
+      // fire, propelling him up and forward in a long arc.
+      this._rocketAxeBoost();
       this.canDoubleJump = false;
-      if (!this.jumpSound.isPlaying) {
-        // Prevent rapid jump sounds
-        this.jumpSound.play();
-      }
     }
     if (this.facing == "right") {
       this.sprite.play("jumping-right", true);
     } else {
       this.sprite.play("jumping-left", true);
+    }
+  }
+
+  _rocketAxeBoost() {
+    const dirX = this.facing === "right" ? 1 : -1;
+    // Strong vertical kick + horizontal thrust — creates a long
+    // airborne arc rather than a second hop.
+    this.sprite.body.velocity.y = -560;
+    this.sprite.body.velocity.x = dirX * 300;
+    this.jumping = true;
+    this.falling = false;
+
+    // Flame exhaust under Jammy for ~450ms
+    const s = scene;
+    if (this._rocketFlameTimer) this._rocketFlameTimer.remove(false);
+    let ticks = 0;
+    this._rocketFlameTimer = s.time.addEvent({
+      delay: 28,
+      repeat: 15,
+      callback: () => {
+        ticks++;
+        if (!this.sprite || !this.sprite.active) return;
+        const flame = s.add.circle(
+          this.sprite.x + (Math.random() - 0.5) * 6,
+          this.sprite.y + 12,
+          3 + Math.random() * 2,
+          Math.random() < 0.5 ? 0xff6620 : 0xffcc44,
+          0.9
+        );
+        flame.setDepth(99);
+        s.tweens.add({
+          targets: flame,
+          y: flame.y + 18,
+          alpha: 0,
+          scale: 0.3,
+          duration: 320,
+          ease: "Cubic.easeOut",
+          onComplete: () => flame.destroy(),
+        });
+      },
+    });
+
+    // Launch sfx — low-pitched laser + delayed explosion rumble
+    if (s.cache.audio.exists("laserSound")) {
+      s.sound.play("laserSound", { volume: 1.0, rate: 0.55 });
+    }
+    if (s.cache.audio.exists("shortExplosion")) {
+      s.time.delayedCall(70, () => {
+        if (s.cache && s.cache.audio.exists("shortExplosion")) {
+          s.sound.play("shortExplosion", { volume: 0.55, rate: 0.9 });
+        }
+      });
     }
   }
 

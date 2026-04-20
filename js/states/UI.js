@@ -81,16 +81,6 @@ class UIScene extends Phaser.Scene {
       this.weaponIcon.setRotation(0);
       this.weaponLabel.setText("SEEDS");
       this.weaponLabel.setTintFill(0xff9966);
-    } else if (weapon === "rocketAxe") {
-      if (!this.textures.exists("rocket-axe") &&
-          typeof RocketAxe !== "undefined" && RocketAxe.ensureTexture) {
-        RocketAxe.ensureTexture(this);
-      }
-      this.weaponIcon.setTexture("rocket-axe");
-      this.weaponIcon.setDisplaySize(26, 12);
-      this.weaponIcon.setRotation(0);
-      this.weaponLabel.setText("ROCKET");
-      this.weaponLabel.setTintFill(0xff6640);
     } else {
       this.weaponIcon.setTexture("audio-wave");
       this.weaponIcon.setDisplaySize(20, 16);
